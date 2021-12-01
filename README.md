@@ -1,36 +1,112 @@
 [![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
+# ml-performance-monitoring
 
-# [Name of Project] [build badges go here when available]
+>   ml-performance-monitoring provides a Python library for sending model data & metrics to New Relic, directly from a Jupyter notebook or any other platform. This library is based of the “newrelic_telemetry_sdk” library.
 
->[Brief description - what is the project and value does it provide? How often should users expect to get releases? How is versioning set up? Where does this project want to go?]
+## Installing ml_performance_monitoring
+To start, the Installing ml-performance-monitoring package must be installed. To install through pip:
+```bash
+    $ pip install https://github.com/newrelic-experimental/ml-performance-monitoring.git
+```
 
-## Installation
+If that fails, download the library from its GitHub page and install it using:
+```bash
+    $ python setup.py install
+```
 
-> [Include a step-by-step procedure on how to get your code installed. Be sure to include any third-party dependencies that need to be installed separately]
+## Example
+1. The example code assumes you've set the following environment variables:
 
-## Getting Started
->[Simple steps to start working with the software similar to a "Hello World"]
+* ``NEW_RELIC_INSERT_KEY``- can be license-key or insights-insert-key ([how to get your insert key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#insights-insert-key))
 
-## Usage
->[**Optional** - Include more thorough instructions on how to use the software. This section might not be needed if the Getting Started section is enough. Remove this section if it's not needed.]
+If not, please send it as a parameter at the MLPerformanceMonitoring call.
+
+2. The example use the libraries: sklearn, pandas, uuid, xgb
+
+<br><br>
+#### Imports, loading the dataset and training
+```
+from sklearn.datasets import load_boston
+from sklearn.model_selection import train_test_split
+
+X, y = load_boston(return_X_y=True)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=123
+)
+
+X_train[:5], y_train[:5]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=123
+)
+
+xg_reg = xgb.XGBRegressor(
+    objective="reg:linear",
+    colsample_bytree=0.3,
+    learning_rate=0.1,
+    max_depth=5,
+    alpha=10,
+    n_estimators=10,
+)
+
+xg_reg.fit(X_train, y_train)
+```
+<br>
+
+
+#### Sending inference data and metrics
+```
+metadata = {"environment": "aws", "dataset": "Boston housing prices", "version": "1.0"}
+
+# Use wrap_model() function to send your model or pipelin as parameter and use them as usual (fit, predict, ect.).
+# This function will send your inference data and data_metrics automaticlly.
+
+model = wrap_model(
+    insert_key=insert_key,
+    model=xg_reg,
+    staging=True,
+    model_name="Boston XGBoost regression",
+    metadata=metadata,
+    send_data_metrics=True,
+)
+
+y_pred = model.predict(X_test)
+
+rmse = round(np.sqrt(mean_squared_error(y_test, y_pred)), 3)
+print(f"RMSE: {rmse}")
+
+# Send your model metrics as a dictionary to new relic.
+model.record_metrics(metrics=metrics, data_metric=False)
+```
+
+[Check out the new entity that was created]().
+Alternatively, you can query your data in the [query builder](https://docs.newrelic.com/docs/query-your-data/explore-query-data/query-builder/use-advanced-nrql-mode-query-data/)
+ using the query:
+```
+Select * From InferenceData Where model_name='Boston XGBoost regression' Since 1 hour Ago Limit Max
+```
 
 
 ## Building
-
->[**Optional** - Include this section if users will need to follow specific instructions to build the software from source. Be sure to include any third party build dependencies that need to be installed separately. Remove this section if it's not needed.]
+```bash
+pip install poetry
+poetry install
+```
 
 ## Testing
-
->[**Optional** - Include instructions on how to run tests if we include tests with the codebase. Remove this section if it's not needed.]
+```bash
+pip install pytest
+pytest tests
+```
 
 ## Support
 
-New Relic hosts and moderates an online forum where customers can interact with New Relic employees as well as other customers to get help and share best practices. Like all official New Relic open source projects, there's a related Community topic in the New Relic Explorers Hub. You can find this project's topic/threads here:
+New Relic hosts  moderates an online forum where customers can interact with New Relic employees as well as other customers to get help and share best practices. Like all official New Relic open source projects, there's a related Community topic in the New Relic Explorers Hub. You can find this project's topic/threads here:
 
 >Add the url for the support thread here
-
+and
 ## Contributing
-We encourage your contributions to improve [project name]! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
+We encourage your contributions to improve ml-performance-monitoring! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company,  please drop us an email at opensource@newrelic.com.
 
 **A note about vulnerabilities**
@@ -40,5 +116,5 @@ As noted in our [security policy](../../security/policy), New Relic is committed
 If you believe you have found a security vulnerability in this project or any of New Relic's products or websites, we welcome and greatly appreciate you reporting it to New Relic through [HackerOne](https://hackerone.com/newrelic).
 
 ## License
-[Project Name] is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
->[If applicable: The [project name] also uses source code from third-party libraries. You can find full details on which libraries are used and the terms under which they are licensed in the third-party notices document.]
+ml-performance-monitoring is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
+>[If applicable: The ml-performance-monitoring also uses source code from third-party libraries. You can find full details on which libraries are used and the terms under which they are licensed in the third-party notices document.]
