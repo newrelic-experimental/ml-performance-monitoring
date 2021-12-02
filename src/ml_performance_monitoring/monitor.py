@@ -220,7 +220,9 @@ class MLPerformanceMonitoring:
                 for name, metrics in self.df_statistics.to_dict().items():
                     metadata = {**self.static_metadata, "name": name}
                     metrics["types"] = FEATURE_TYPE.get(metrics["types"])
-                    self.record_metrics(metrics=metrics, metadata=metadata)
+                    self.record_metrics(
+                        metrics=metrics, metadata=metadata, data_metric=True
+                    )
             else:
                 warnings.warn(
                     "send_data_metrics occurs only when there are at least 100 rows"
@@ -240,7 +242,7 @@ class MLPerformanceMonitoring:
                 inference_data.drop(columns=["inference_identifier"], errors="ignore")
             )
             for name, types in columns_types.items():
-                event = {"name": name, "types": types}
+                event = {"name": name, "type": types}
                 event.update(self.static_metadata)
                 self._record_event(event, "InferenceData")
 
@@ -258,13 +260,15 @@ class MLPerformanceMonitoring:
         self,
         metrics: Dict[str, Any],
         metadata: Dict[str, Any] = None,
-        data_metric: bool = True,
+        data_metric: bool = False,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
         metric_type = "data_metric" if data_metric else "model_metric"
         metadata = metadata if metadata else {**self.static_metadata}
         metadata.update(
-            {"metricType": metric_type, "modelName": "Boston XGBoost regression"}
+            {
+                "metricType": metric_type,
+            }
         )
 
         for metric, value in metrics.items():
