@@ -1,7 +1,7 @@
 [![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
 # ml-performance-monitoring
 
->   ml-performance-monitoring provides a Python library for sending model data & metrics to New Relic, directly from a Jupyter notebook or any other platform. This library is based on the “newrelic_telemetry_sdk” library.
+>   ml-performance-monitoring provides a Python library for sending machine learning models' inference data and performance metrics into New Relic. It is based on the [newrelic-telemetry-sdk-python](https://github.com/newrelic/newrelic-telemetry-sdk-python) library. By using this package, you can easily and quickly monitor your model, directly from a Jupyter notebook or a cloud service.
 
 ## Installing ml_performance_monitoring
 To start, the ml-performance-monitoring package must be installed. To install through pip:
@@ -16,7 +16,7 @@ To start, the ml-performance-monitoring package must be installed. To install th
 
 If not, please send it as a parameter at the MLPerformanceMonitoring call.
 
-2. The example uses the libraries: sklearn, pandas, xgboost
+2. The example uses the libraries: numpy, pandas, sklearn, xgboost
 
 
 <br>
