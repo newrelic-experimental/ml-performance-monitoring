@@ -208,7 +208,7 @@ class MLPerformanceMonitoring:
                 columns=["label_" + str(sub) for sub in labels_columns],
             )
         y_df = y.copy()
-        y.columns = ["label_" + str(sub) for sub in y.columns]
+        y_df.columns = ["label_" + str(sub) for sub in y_df.columns]
         inference_data = pd.concat([X_df, y_df], axis=1)
         if self.send_data_metrics:
             if len(inference_data) >= data_summary_min_rows:
@@ -239,10 +239,12 @@ class MLPerformanceMonitoring:
         if self.first_record:
             self.first_record = False
             columns_types = self._calc_columns_types(
-                inference_data.drop(columns=["inference_identifier"], errors="ignore")
+                inference_data.drop(
+                    columns=["inference_identifier", "index"], errors="ignore"
+                )
             )
             for name, types in columns_types.items():
-                event = {"name": name, "type": types}
+                event = {"columnName": name, "columnType": types}
                 event.update(self.static_metadata)
                 self._record_event(event, "InferenceData")
 

@@ -23,7 +23,7 @@ If not, please send it as a parameter at the MLPerformanceMonitoring call.
 
 #### Imports, loading the dataset and training
 ```
-from ml_performance_monitoring.monitor import MLPerformanceMonitoring
+from ml_performance_monitoring.monitor import wrap_model
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.datasets import load_boston
@@ -72,6 +72,7 @@ y_pred = model.predict(X_test)
 
 rmse = round(np.sqrt(mean_squared_error(y_test, y_pred)), 3)
 print(f"RMSE: {rmse}")
+metrics = {"RMSE": rmse,}
 
 # Send your model metrics as a dictionary to new relic.
 model.record_metrics(metrics=metrics, data_metric=False)
