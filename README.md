@@ -1,17 +1,12 @@
 [![New Relic Experimental header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#new-relic-experimental)
 # ml-performance-monitoring
 
->   ml-performance-monitoring provides a Python library for sending model data & metrics to New Relic, directly from a Jupyter notebook or any other platform. This library is based of the “newrelic_telemetry_sdk” library.
+>   ml-performance-monitoring provides a Python library for sending model data & metrics to New Relic, directly from a Jupyter notebook or any other platform. This library is based on the “newrelic_telemetry_sdk” library.
 
 ## Installing ml_performance_monitoring
-To start, the Installing ml-performance-monitoring package must be installed. To install through pip:
+To start, the ml-performance-monitoring package must be installed. To install through pip:
 ```bash
-    $ pip install https://github.com/newrelic-experimental/ml-performance-monitoring.git
-```
-
-If that fails, download the library from its GitHub page and install it using:
-```bash
-    $ python setup.py install
+    $ pip install git+https://github.com/newrelic-experimental/ml-performance-monitoring.git
 ```
 
 ## Example
@@ -21,24 +16,26 @@ If that fails, download the library from its GitHub page and install it using:
 
 If not, please send it as a parameter at the MLPerformanceMonitoring call.
 
-2. The example use the libraries: sklearn, pandas, uuid, xgb
+2. The example uses the libraries: sklearn, pandas, xgboost
 
-<br><br>
+
+<br>
+
 #### Imports, loading the dataset and training
 ```
+from ml_performance_monitoring.monitor import MLPerformanceMonitoring
+import numpy as np
+from sklearn.metrics import mean_squared_error
 from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split
+import xgboost as xgb
 
 X, y = load_boston(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=123
 )
 
-X_train[:5], y_train[:5]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=123
-)
+print(X_train[:5], y_train[:5])
 
 xg_reg = xgb.XGBRegressor(
     objective="reg:linear",
@@ -58,14 +55,15 @@ xg_reg.fit(X_train, y_train)
 ```
 metadata = {"environment": "aws", "dataset": "Boston housing prices", "version": "1.0"}
 
-# Use wrap_model() function to send your model or pipelin as parameter and use them as usual (fit, predict, ect.).
-# This function will send your inference data and data_metrics automaticlly.
+# Use the wrap_model() function to send your model or pipeline as parameters and use them as usual (fit, predict, etc.).
+# This function will send your inference data and data_metrics automatically.
+
 
 model = wrap_model(
     insert_key=insert_key,
     model=xg_reg,
     staging=True,
-    model_name="Boston XGBoost regression",
+    model_name="XGBoost Regression on Boston Dataset",
     metadata=metadata,
     send_data_metrics=True,
 )
@@ -79,18 +77,11 @@ print(f"RMSE: {rmse}")
 model.record_metrics(metrics=metrics, data_metric=False)
 ```
 
-[Check out the new entity that was created]().
+[Check out the new entity that was created](https://one.newrelic.com/).
 Alternatively, you can query your data in the [query builder](https://docs.newrelic.com/docs/query-your-data/explore-query-data/query-builder/use-advanced-nrql-mode-query-data/)
- using the query:
+ using the following query:
 ```
-Select * From InferenceData Where model_name='Boston XGBoost regression' Since 1 hour Ago Limit Max
-```
-
-
-## Building
-```bash
-pip install poetry
-poetry install
+Select * From InferenceData Where model_name='XGBoost Regression on Boston Dataset' Since 1 hour Ago Limit Max
 ```
 
 ## Testing
@@ -100,16 +91,13 @@ pytest tests
 ```
 
 ## Support
+As an open source library, customers can interact with New Relic employees as well as other customers to get help by opening GitHub issues in the repository.
 
-New Relic hosts  moderates an online forum where customers can interact with New Relic employees as well as other customers to get help and share best practices. Like all official New Relic open source projects, there's a related Community topic in the New Relic Explorers Hub. You can find this project's topic/threads here:
-
->Add the url for the support thread here
-and
 ## Contributing
 We encourage your contributions to improve ml-performance-monitoring! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
-If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company,  please drop us an email at opensource@newrelic.com.
+If you have any questions, or to execute our corporate CLA (required if your contribution is on behalf of a company) please drop us an email at opensource@newrelic.com.
 
-**A note about vulnerabilities**
+**A note about vulnerabilities:**
 
 As noted in our [security policy](../../security/policy), New Relic is committed to the privacy and security of our customers and their data. We believe that providing coordinated disclosure by security researchers and engaging with the security community are important means to achieve our security goals.
 
