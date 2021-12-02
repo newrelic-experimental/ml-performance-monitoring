@@ -208,7 +208,7 @@ class MLPerformanceMonitoring:
                 columns=["label_" + str(sub) for sub in labels_columns],
             )
         y_df = y.copy()
-        y.columns = ["label_" + str(sub) for sub in y.columns]
+        y_df.columns = ["label_" + str(sub) for sub in y_df.columns]
         inference_data = pd.concat([X_df, y_df], axis=1)
         if self.send_data_metrics:
             if len(inference_data) >= data_summary_min_rows:
@@ -220,7 +220,9 @@ class MLPerformanceMonitoring:
                 for name, metrics in self.df_statistics.to_dict().items():
                     metadata = {**self.static_metadata, "name": name}
                     metrics["types"] = FEATURE_TYPE.get(metrics["types"])
-                    self.record_metrics(metrics=metrics, metadata=metadata)
+                    self.record_metrics(
+                        metrics=metrics, metadata=metadata, data_metric=True
+                    )
             else:
                 warnings.warn(
                     "send_data_metrics occurs only when there are at least 100 rows"
@@ -237,10 +239,12 @@ class MLPerformanceMonitoring:
         if self.first_record:
             self.first_record = False
             columns_types = self._calc_columns_types(
-                inference_data.drop(columns=["inference_identifier"], errors="ignore")
+                inference_data.drop(
+                    columns=["inference_identifier", "index"], errors="ignore"
+                )
             )
             for name, types in columns_types.items():
-                event = {"name": name, "types": types}
+                event = {"columnName": name, "columnType": types}
                 event.update(self.static_metadata)
                 self._record_event(event, "InferenceData")
 
@@ -258,13 +262,15 @@ class MLPerformanceMonitoring:
         self,
         metrics: Dict[str, Any],
         metadata: Dict[str, Any] = None,
-        data_metric: bool = True,
+        data_metric: bool = False,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
         metric_type = "data_metric" if data_metric else "model_metric"
         metadata = metadata if metadata else {**self.static_metadata}
         metadata.update(
-            {"metricType": metric_type, "modelName": "Boston XGBoost regression"}
+            {
+                "metricType": metric_type,
+            }
         )
 
         for metric, value in metrics.items():
