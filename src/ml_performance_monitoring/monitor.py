@@ -146,9 +146,9 @@ class MLPerformanceMonitoring:
     def _calc_columns_types(self, df):
         columns_types = (
             df.drop(columns=["inference_identifier"], errors="ignore")
-            .dtypes.replace(
-                to_replace=["object", "int64", "float64", "datetime64"],
-                value=["categorical", "numeric", "numeric", "datetime"],
+            .dtypes.apply(str)
+            .replace(
+                {r"^(float|int).*": "numeric", "object": "categorical"}, regex=True
             )
             .rename("types")
         )
@@ -162,6 +162,7 @@ class MLPerformanceMonitoring:
         calling_method=None,
         inference_identifier=None,
         data_summary_min_rows: int = 100,
+        timestamp: int = None,
     ):
         """This method send inference data to the table "InferenceData" in New Relic NRDB"""
         self.static_metadata.update(
@@ -205,7 +206,7 @@ class MLPerformanceMonitoring:
 
             y = pd.DataFrame(
                 list(map(np.ravel, y)),
-                columns=["label_" + str(sub) for sub in labels_columns],
+                columns=[str(sub) for sub in labels_columns],
             )
         y_df = y.copy()
         y_df.columns = ["label_" + str(sub) for sub in y_df.columns]
@@ -246,10 +247,14 @@ class MLPerformanceMonitoring:
             for name, types in columns_types.items():
                 event = {"columnName": name, "columnType": types}
                 event.update(self.static_metadata)
+                if timestamp:
+                    event.update({"timestamp": timestamp})
                 self._record_event(event, "InferenceData")
 
         for event in data_dict:
             event.update(self.static_metadata)
+            if timestamp:
+                event.update({"timestamp": timestamp})
             if calling_method:
                 event["calling_method"] = calling_method
             if len(event) > 255:
