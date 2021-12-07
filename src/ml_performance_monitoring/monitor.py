@@ -18,8 +18,6 @@ FEATURE_TYPE = {
     "numeric": 2,
     "datetime": 3,
     "categorical": 4,
-    "constant": 5,
-    "unique": 6,
 }
 
 
@@ -36,17 +34,18 @@ class MLPerformanceMonitoring:
         send_data_metrics=False,
         features_columns: List[str] = None,
         labels_columns: List[str] = None,
+        event_client_host: str = None,
+        metric_client_host: str = None,
     ):
-        self.staging = staging
-        self._set_insert_key(insert_key)
-        self.model = model
-        self.send_inference_data = send_inference_data
-        self.send_data_metrics = send_data_metrics
-        self.first_record = True
-        if not self.model:
+
+        if not model:
             warnings.warn(
                 "model wasn't defined, please use 'record_inference_data' to send data"
             )
+        if not isinstance(model_name, str):
+            raise TypeError("model_name instance type must be str")
+        if not isinstance(model_name, str):
+            raise TypeError("model_name instance type must be str")
         if not isinstance(model_name, str):
             raise TypeError("model_name instance type must be str")
         if not isinstance(metadata, Dict) and metadata is not None:
@@ -57,11 +56,26 @@ class MLPerformanceMonitoring:
             raise TypeError("features_columns instance type must be List[str]")
         if not isinstance(labels_columns, List) and labels_columns is not None:
             raise TypeError("labels_columns instance type must be List[str]")
+        if not isinstance(event_client_host, str) and event_client_host is not None:
+            raise TypeError("event_client_host instance type must be str or None")
+        if not isinstance(metric_client_host, str) and metric_client_host is not None:
+            raise TypeError("metric_client_host instance type must be str or None")
 
+        self._set_insert_key(insert_key)
+        self.model = model
+        self.send_inference_data = send_inference_data
+        self.send_data_metrics = send_data_metrics
+        self.first_record = True
         self.model_name = model_name
         self.static_metadata = metadata
         self.features_columns = features_columns
         self.labels_columns = labels_columns
+        self.event_client_host = (
+            metric_client_host or os.getenv("METRIC_CLIENT_HOST", MetricClient.HOST),
+        )
+        self.metric_client_host = (
+            event_client_host or os.getenv("EVENT_CLIENT_HOST", EventClient.HOST),
+        )
 
     def _set_insert_key(
         self,
@@ -86,7 +100,7 @@ class MLPerformanceMonitoring:
         # Client is the HTTP connection to New Relic (HTTP API level)
         self.metric_client = MetricClient(
             self.insert_key,
-            host="staging-" + MetricClient.HOST if self.staging else None,
+            host=self.metric_client_host,
         )
 
         # Storage for metrics + aggregation (I1(v1) + I1(v2) = I1(v1+v2))
@@ -103,7 +117,7 @@ class MLPerformanceMonitoring:
         # For more information please see https://docs.newrelic.com/docs/telemetry-data-platform/ingest-apis/introduction-event-api/
         self.event_client = EventClient(
             self.insert_key,
-            host="staging-" + EventClient.HOST if self.staging else None,
+            host=self.event_client_host,
         )
         self.event_batch = EventBatch()
 
@@ -249,7 +263,10 @@ class MLPerformanceMonitoring:
                 event.update(self.static_metadata)
                 if timestamp:
                     event.update({"timestamp": timestamp})
-                self._record_event(event, "InferenceData")
+                try:
+                    self._record_event(event, "InferenceData")
+                except Exception as e:
+                    print(e)
 
         for event in data_dict:
             event.update(self.static_metadata)
@@ -259,8 +276,10 @@ class MLPerformanceMonitoring:
                 event["calling_method"] = calling_method
             if len(event) > 255:
                 raise ValueError("Max attributes number per row is 255")
-
-            self._record_event(event, "InferenceData")
+            try:
+                self._record_event(event, "InferenceData")
+            except Exception as e:
+                print(e)
         print("inference data sent successfully")
 
     def record_metrics(
@@ -279,7 +298,10 @@ class MLPerformanceMonitoring:
         )
 
         for metric, value in metrics.items():
-            self.metric_batch.record_gauge(metric, value, metadata)
+            try:
+                self.metric_batch.record_gauge(metric, value, metadata)
+            except Exception as e:
+                print(e)
         print(f"{metric_type} sent successfully")
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
