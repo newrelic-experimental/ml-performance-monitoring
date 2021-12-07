@@ -48,15 +48,15 @@ class MLPerformanceMonitoring:
                 "model wasn't defined, please use 'record_inference_data' to send data"
             )
         if not isinstance(model_name, str):
-            raise Exception("model_name instance type must be str")
+            raise TypeError("model_name instance type must be str")
         if not isinstance(metadata, Dict) and metadata is not None:
-            raise Exception("metadata instance type must be Dict[str, Any] or None")
+            raise TypeError("metadata instance type must be Dict[str, Any] or None")
         if not isinstance(staging, bool):
-            raise Exception("staging instance type must be bool")
+            raise TypeError("staging instance type must be bool")
         if not isinstance(features_columns, List) and features_columns is not None:
-            raise Exception("features_columns instance type must be List[str]")
+            raise TypeError("features_columns instance type must be List[str]")
         if not isinstance(labels_columns, List) and labels_columns is not None:
-            raise Exception("labels_columns instance type must be List[str]")
+            raise TypeError("labels_columns instance type must be List[str]")
 
         self.model_name = model_name
         self.static_metadata = metadata
@@ -72,7 +72,7 @@ class MLPerformanceMonitoring:
         if (
             not isinstance(self.insert_key, str) and self.insert_key is not None
         ) or self.insert_key is None:
-            raise Exception("insert_key instance type must str and not None")
+            raise TypeError("insert_key instance type must str and not None")
         self._start()
 
     # initialize event thread
@@ -172,15 +172,15 @@ class MLPerformanceMonitoring:
             }
         )
         if not isinstance(X, (pd.core.frame.DataFrame, np.ndarray)):
-            raise Exception(
+            raise TypeError(
                 "X instance type must be pd.core.frame.DataFrame or np.ndarray"
             )
         if not isinstance(y, (pd.core.frame.DataFrame, np.ndarray)):
-            raise Exception(
+            raise TypeError(
                 "y instance type must be pd.core.frame.DataFrame or np.ndarray"
             )
         if len(X) != len(y):
-            raise Exception("X and y must have the same length")
+            raise ValueError("X and y must have the same length")
         if not isinstance(X, pd.core.frame.DataFrame):
             X = pd.DataFrame(
                 list(map(np.ravel, X)),
@@ -258,7 +258,7 @@ class MLPerformanceMonitoring:
             if calling_method:
                 event["calling_method"] = calling_method
             if len(event) > 255:
-                raise Exception("Max attributes number per row is 255")
+                raise ValueError("Max attributes number per row is 255")
 
             self._record_event(event, "InferenceData")
         print("inference data sent successfully")
