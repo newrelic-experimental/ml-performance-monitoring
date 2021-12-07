@@ -60,12 +60,14 @@ class MLPerformanceMonitoring:
             raise TypeError("event_client_host instance type must be str or None")
         if not isinstance(metric_client_host, str) and metric_client_host is not None:
             raise TypeError("metric_client_host instance type must be str or None")
-        self.event_client_host = (
-            metric_client_host or os.getenv("METRIC_CLIENT_HOST", MetricClient.HOST),
+        self.event_client_host = metric_client_host or os.getenv(
+            "METRIC_CLIENT_HOST", MetricClient.HOST
         )
-        self.metric_client_host = (
-            event_client_host or os.getenv("EVENT_CLIENT_HOST", EventClient.HOST),
+
+        self.metric_client_host = event_client_host or os.getenv(
+            "EVENT_CLIENT_HOST", EventClient.HOST
         )
+
         self._set_insert_key(insert_key)
         self.model = model
         self.send_inference_data = send_inference_data
