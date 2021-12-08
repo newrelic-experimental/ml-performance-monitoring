@@ -69,7 +69,7 @@ features_columns, labels_columns = (
 
 
 ml_performence_monitor_model = wrap_model(
-    insert_key='None',  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
+    insert_key=None,  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
     model=xg_reg,
     model_name="XGBoost Regression on Boston Dataset",
     metadata=metadata,
