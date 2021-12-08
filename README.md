@@ -30,7 +30,12 @@ from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
 
-X, y = load_boston(return_X_y=True)
+boston_dataset = load_boston()
+
+X, y = (
+    boston_dataset["data"],
+    boston_dataset["target"],)
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=123
 )
@@ -54,28 +59,35 @@ xg_reg.fit(X_train, y_train)
 #### Sending inference data and metrics
 ```
 metadata = {"environment": "aws", "dataset": "Boston housing prices", "version": "1.0"}
+features_columns, labels_columns = (
+    list(boston_dataset["feature_names"]),
+    ["target"],
+)
 
 # Use the wrap_model() function to send your model or pipeline as parameters and use them as usual (fit, predict, etc.).
 # This function will send your inference data and data_metrics automatically.
 
 
-model = wrap_model(
-    insert_key=insert_key,
+ml_performence_monitor_model = wrap_model(
+    insert_key=None,  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
     model=xg_reg,
-    staging=True,
     model_name="XGBoost Regression on Boston Dataset",
     metadata=metadata,
     send_data_metrics=True,
+    features_columns=features_columns,
+    labels_columns=labels_columns,
 )
 
-y_pred = model.predict(X_test)
+y_pred = ml_performence_monitor_model.predict(
+    X=X_test,
+)
 
 rmse = round(np.sqrt(mean_squared_error(y_test, y_pred)), 3)
 print(f"RMSE: {rmse}")
 metrics = {"RMSE": rmse,}
 
 # Send your model metrics as a dictionary to new relic.
-model.record_metrics(metrics=metrics, data_metric=False)
+ml_performence_monitor_model.record_metrics(metrics=metrics)
 ```
 
 [Check out the new entity that was created](https://one.newrelic.com/).
@@ -84,6 +96,8 @@ Alternatively, you can query your data in the [query builder](https://docs.newre
 ```
 Select * From InferenceData Where model_name='XGBoost Regression on Boston Dataset' Since 1 hour Ago Limit Max
 ```
+
+For 24 hours of model inference data simulation, please run the [example notebook](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/sklearn.RandomForestClassifier_on_Iris_dataset.ipynb).
 
 ## Testing
 ```bash
