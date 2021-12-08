@@ -97,7 +97,7 @@ Alternatively, you can query your data in the [query builder](https://docs.newre
 Select * From InferenceData Where model_name='XGBoost Regression on Boston Dataset' Since 1 hour Ago Limit Max
 ```
 
-For 24 hours of model inference data simulation, please run the [example notebooks](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/sklearn.RandomForestClassifier_on_Iris_dataset.ipynb).
+For 24 hours of model inference data simulation, please run the [example notebook](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/sklearn.RandomForestClassifier_on_Iris_dataset.ipynb).
 
 ## Testing
 ```bash
