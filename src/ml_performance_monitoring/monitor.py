@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
+import wrapt
 from newrelic_telemetry_sdk import (
     EventBatch,
     EventClient,
@@ -34,6 +35,7 @@ class MLPerformanceMonitoring:
         send_data_metrics=False,
         features_columns: List[str] = None,
         labels_columns: List[str] = None,
+        data_summary_min_rows: int = 100,
         event_client_host: str = None,
         metric_client_host: str = None,
     ):
@@ -77,6 +79,7 @@ class MLPerformanceMonitoring:
         self.static_metadata = metadata
         self.features_columns = features_columns
         self.labels_columns = labels_columns
+        self.data_summary_min_rows = data_summary_min_rows
 
     def _set_insert_key(
         self,
@@ -160,8 +163,7 @@ class MLPerformanceMonitoring:
 
     def _calc_columns_types(self, df):
         columns_types = (
-            df.drop(columns=["inference_identifier"], errors="ignore")
-            .dtypes.apply(str)
+            df.dtypes.apply(str)
             .replace(
                 {r"^(float|int).*": "numeric", "object": "categorical"}, regex=True
             )
@@ -174,9 +176,6 @@ class MLPerformanceMonitoring:
         X: Union[pd.core.frame.DataFrame, np.ndarray],
         y: Union[pd.core.frame.DataFrame, np.ndarray],
         *,
-        calling_method=None,
-        inference_identifier=None,
-        data_summary_min_rows: int = 100,
         timestamp: int = None,
     ):
         """This method send inference data to the table "InferenceData" in New Relic NRDB"""
@@ -205,12 +204,6 @@ class MLPerformanceMonitoring:
             )
         X_df = X.copy()
         X_df.columns = ["feature_" + str(sub) for sub in X_df.columns]
-        if inference_identifier:
-            X_df.rename(
-                {f"feature_{inference_identifier}": "inference_identifier"},
-                axis=1,
-                inplace=True,
-            )
 
         if not isinstance(y, pd.core.frame.DataFrame):
             labels_columns = (
@@ -227,12 +220,8 @@ class MLPerformanceMonitoring:
         y_df.columns = ["label_" + str(sub) for sub in y_df.columns]
         inference_data = pd.concat([X_df, y_df], axis=1)
         if self.send_data_metrics:
-            if len(inference_data) >= data_summary_min_rows:
-                self.df_statistics = self._calc_descriptive_statistics(
-                    inference_data.drop(
-                        columns=["inference_identifier"], errors="ignore"
-                    )
-                )
+            if len(inference_data) >= self.data_summary_min_rows:
+                self.df_statistics = self._calc_descriptive_statistics(inference_data)
                 for name, metrics in self.df_statistics.to_dict().items():
                     metadata = {**self.static_metadata, "name": name}
                     metrics["types"] = FEATURE_TYPE.get(metrics["types"])
@@ -254,11 +243,7 @@ class MLPerformanceMonitoring:
 
         if self.first_record:
             self.first_record = False
-            columns_types = self._calc_columns_types(
-                inference_data.drop(
-                    columns=["inference_identifier", "index"], errors="ignore"
-                )
-            )
+            columns_types = self._calc_columns_types(inference_data)
             for name, types in columns_types.items():
                 event = {"columnName": name, "columnType": types}
                 event.update(self.static_metadata)
@@ -273,8 +258,6 @@ class MLPerformanceMonitoring:
             event.update(self.static_metadata)
             if timestamp:
                 event.update({"timestamp": timestamp})
-            if calling_method:
-                event["calling_method"] = calling_method
             if len(event) > 255:
                 raise ValueError("Max attributes number per row is 255")
             try:
@@ -305,42 +288,40 @@ class MLPerformanceMonitoring:
                 print(e)
         print(f"{metric_type} sent successfully")
 
-    def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
+    @wrapt.decorator
+    def wrap_model_functions(wrapped, self, instance, *args, **kwargs):
+        X = instance[0]
+        y_pred = wrapped(X)
+        self.record_inference_data(X, y_pred)
+        return y_pred
+
+    @wrap_model_functions
+    def predict(self, X: Union[pd.DataFrame, np.ndarray]):
         """This method call the model 'prdict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
-        x = (
-            X.drop(kwargs["inference_identifier"], axis=1)
-            if "inference_identifier" in kwargs
-            else X
-        )
-        y_pred = self.model.predict(x)
-        self.record_inference_data(X, y_pred, **kwargs)
-        return y_pred
+        return self.model.predict(X)
 
-    def predict_log_proba(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
-        """This method call the model 'predict_log_proba' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
-        y_pred = self.model.predict_log_proba(X)
-        self.record_inference_data(X, y_pred, **kwargs)
-        return y_pred
+    @wrap_model_functions
+    def predict_log_proba(self, X: Union[pd.DataFrame, np.ndarray]):
+        """This method call the model 'prdict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
+        return self.model.predict(X)
 
-    def predict_proba(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
+    @wrap_model_functions
+    def predict_proba(self, X: Union[pd.DataFrame, np.ndarray]):
         """This method call the model 'predict_log_proba' method and also call 'record_inference_data' method to send metrics to the table "InferenceData" in New Relic NRDB"""
-        y_pred = self.model.predict_proba(X)
-        self.record_inference_data(X, y_pred, **kwargs)
-        return y_pred
+        return self.model.predict_proba(X)
 
     def fit(self, X: Union[pd.DataFrame, np.ndarray], y):
         """This method call the model 'fit' method"""
         return self.model.fit(X, y)
 
-    def fit_transform(self, X: Union[pd.DataFrame, np.ndarray], y, **kwargs):
+    def fit_transform(self, X: Union[pd.DataFrame, np.ndarray], y):
         """This method call the model 'fit_transform' method"""
         return self.model.fit_transform(X, y)
 
-    def fit_predict(self, X: Union[pd.DataFrame, np.ndarray], y, **kwargs):
+    @wrap_model_functions
+    def fit_predict(self, X: Union[pd.DataFrame, np.ndarray], y):
         """This method call the model 'fit_predict' method and also call 'record_inference_data' method to send inference data to the table "InferenceData" in New Relic NRDB"""
-        y_pred = self.model.fit_predict(X, y)
-        self.record_inference_data(X, y_pred, **kwargs)
-        return y_pred
+        return self.model.fit_predict(X, y)
 
 
 def wrap_model(
@@ -365,4 +346,5 @@ def wrap_model(
         send_data_metrics,
         features_columns,
         labels_columns,
+        data_summary_min_rows=100,
     )
