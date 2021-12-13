@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -5,6 +7,7 @@ from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 
 metadata = {"environment": "aws", "dataset": "iris", "version": "1.0"}
 
+warnings.filterwarnings("ignore")
 monitor = MLPerformanceMonitoring(
     insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     model_name="Iris RandomForestClassifier",
@@ -12,6 +15,7 @@ monitor = MLPerformanceMonitoring(
 )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_insert_key():
     with pytest.raises(Exception) as insert_key_type:
         MLPerformanceMonitoring(
@@ -35,6 +39,7 @@ def test_init_insert_key():
     )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_model_name():
     with pytest.raises(Exception) as model_name_missing:
         MLPerformanceMonitoring(
@@ -55,6 +60,7 @@ def test_init_model_name():
     assert model_name_type.value.args[0] == "model_name instance type must be str"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_metadata():
     with pytest.raises(Exception) as metadata_type:
         MLPerformanceMonitoring(
@@ -68,6 +74,7 @@ def test_init_metadata():
     )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_output_type():
     assert isinstance(
         MLPerformanceMonitoring(
