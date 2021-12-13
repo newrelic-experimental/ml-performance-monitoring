@@ -195,7 +195,14 @@ class MLPerformanceMonitoring:
             )
         if len(X) != len(y):
             raise ValueError("X and y must have the same length")
+
         if not isinstance(X, pd.core.frame.DataFrame):
+            if self.features_columns is not None and len(X[0]) != len(
+                self.features_columns
+            ):
+                raise ValueError(
+                    "X columns number and features_columns list must have the same length"
+                )
             X = pd.DataFrame(
                 list(map(np.ravel, X)),
                 columns=self.features_columns
@@ -206,6 +213,12 @@ class MLPerformanceMonitoring:
         X_df.columns = ["feature_" + str(sub) for sub in X_df.columns]
 
         if not isinstance(y, pd.core.frame.DataFrame):
+            if self.labels_columns is not None and (
+                1 if y.ndim == 1 else y.shape[-1]
+            ) != len(self.labels_columns):
+                raise ValueError(
+                    "y columns number and labels_columns list must have the same length"
+                )
             labels_columns = (
                 self.labels_columns
                 if self.labels_columns

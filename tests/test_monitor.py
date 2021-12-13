@@ -147,3 +147,41 @@ def test_record_inference_data():
         X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
         y=np.array([11, 12, 5, 2]),
     )
+
+
+def test_features_and_labels_columns_langth():
+    with pytest.raises(Exception) as X_features_columns_length:
+        monitor.features_columns = ["a", "b", "c", "d", "e"]
+        monitor.labels_columns = ["f", "g"]
+
+        monitor.record_inference_data(
+            X=np.array(
+                [[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]
+            ),
+            y=np.array([11, 12, 5, 2]),
+        )
+    assert (
+        X_features_columns_length.value.args[0]
+        == "X columns number and features_columns list must have the same length"
+    )
+
+    with pytest.raises(Exception) as y_labels_columns_length:
+        monitor.features_columns = ["a", "b", "c", "d"]
+        monitor.labels_columns = ["e", "f"]
+        monitor.record_inference_data(
+            X=np.array(
+                [[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]
+            ),
+            y=np.array([11, 12, 5, 2]),
+        )
+    assert (
+        y_labels_columns_length.value.args[0]
+        == "y columns number and labels_columns list must have the same length"
+    )
+
+    monitor.features_columns = ["a", "b", "c", "d"]
+    monitor.labels_columns = ["e"]
+    monitor.record_inference_data(
+        X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
+        y=np.array([11, 12, 5, 2]),
+    )

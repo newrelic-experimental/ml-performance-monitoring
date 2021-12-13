@@ -8,7 +8,7 @@ authors = ["AIR <applied-intelligence-research-team@newrelic.com>"]
 python = ">=3.6,<3.11"
 newrelic-telemetry-sdk = "^0.4.2"
 numpy = '*'
-wrapt='*'
+wrapt="^1.13.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"
