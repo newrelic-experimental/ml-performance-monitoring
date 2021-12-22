@@ -276,7 +276,7 @@ class MLPerformanceMonitoring:
         table_name = "InferenceData"
         message = "inference data sent successfully"
         if "data_set_name" in kwargs:
-            table_name = "DataSets"
+            table_name = "DataSet"
             message = f'data set "{kwargs["data_set_name"]}" sent successfully'
         for event in data_dict:
             event.update(self.static_metadata)
