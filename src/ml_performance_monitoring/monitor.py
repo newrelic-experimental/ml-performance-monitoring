@@ -1,5 +1,6 @@
 import atexit
 import os
+import time
 import warnings
 from typing import Any, Dict, List, Union
 
@@ -160,8 +161,7 @@ class MLPerformanceMonitoring:
 
     def _calc_columns_types(self, df):
         columns_types = (
-            df.drop(columns=["inference_identifier"], errors="ignore")
-            .dtypes.apply(str)
+            df.dtypes.apply(str)
             .replace(
                 {r"^(float|int).*": "numeric", "object": "categorical"}, regex=True
             )
@@ -169,15 +169,29 @@ class MLPerformanceMonitoring:
         )
         return columns_types
 
+    def record_data_set(
+        self,
+        X: Union[pd.core.frame.DataFrame, np.ndarray],
+        y: Union[pd.core.frame.DataFrame, np.ndarray],
+        data_set_name: str = None,
+    ):
+        """This method send data set to the table "DataSets" in New Relic NRDB"""
+        if not data_set_name:
+            data_set_name = f"data set {int(time.time()*1000)}"
+            warnings.warn(
+                f"""The instance "data_set_name" wasn't set, so the generated name "{data_set_name}" (the current timestamp) will be used as "data_set_name" """
+            )
+        self.record_inference_data(X, y, data_set_name=data_set_name)
+
     def record_inference_data(
         self,
         X: Union[pd.core.frame.DataFrame, np.ndarray],
         y: Union[pd.core.frame.DataFrame, np.ndarray],
         *,
         calling_method=None,
-        inference_identifier=None,
         data_summary_min_rows: int = 100,
         timestamp: int = None,
+        **kwargs,
     ):
         """This method send inference data to the table "InferenceData" in New Relic NRDB"""
         self.static_metadata.update(
@@ -205,12 +219,6 @@ class MLPerformanceMonitoring:
             )
         X_df = X.copy()
         X_df.columns = ["feature_" + str(sub) for sub in X_df.columns]
-        if inference_identifier:
-            X_df.rename(
-                {f"feature_{inference_identifier}": "inference_identifier"},
-                axis=1,
-                inplace=True,
-            )
 
         if not isinstance(y, pd.core.frame.DataFrame):
             labels_columns = (
@@ -226,51 +234,54 @@ class MLPerformanceMonitoring:
         y_df = y.copy()
         y_df.columns = ["label_" + str(sub) for sub in y_df.columns]
         inference_data = pd.concat([X_df, y_df], axis=1)
-        if self.send_data_metrics:
-            if len(inference_data) >= data_summary_min_rows:
-                self.df_statistics = self._calc_descriptive_statistics(
-                    inference_data.drop(
-                        columns=["inference_identifier"], errors="ignore"
+        if "data_set_name" not in kwargs:
+            if self.send_data_metrics:
+                if len(inference_data) >= data_summary_min_rows:
+                    self.df_statistics = self._calc_descriptive_statistics(
+                        inference_data
                     )
-                )
-                for name, metrics in self.df_statistics.to_dict().items():
-                    metadata = {**self.static_metadata, "name": name}
-                    metrics["types"] = FEATURE_TYPE.get(metrics["types"])
-                    self.record_metrics(
-                        metrics=metrics, metadata=metadata, data_metric=True
+                    for name, metrics in self.df_statistics.to_dict().items():
+                        metadata = {**self.static_metadata, "name": name}
+                        metrics["types"] = FEATURE_TYPE.get(metrics["types"])
+                        self.record_metrics(
+                            metrics=metrics, metadata=metadata, data_metric=True
+                        )
+                else:
+                    warnings.warn(
+                        "send_data_metrics occurs only when there are at least 100 rows"
                     )
-            else:
+            if not self.send_inference_data:
                 warnings.warn(
-                    "send_data_metrics occurs only when there are at least 100 rows"
+                    "send_inference_data parameter is False, please turn it to True to send the inference_data"
                 )
-        if not self.send_inference_data:
-            warnings.warn(
-                "send_inference_data parameter is False, please turn it to True to send the inference_data"
-            )
-            return
-        inference_data.reset_index(level=0, inplace=True)
+                return
+            inference_data.reset_index(level=0, inplace=True)
+
+            if self.first_record:
+                self.first_record = False
+                columns_types = self._calc_columns_types(
+                    inference_data.drop(columns=["index"], errors="ignore")
+                )
+                for name, types in columns_types.items():
+                    event = {"columnName": name, "columnType": types}
+                    event.update(self.static_metadata)
+                    if timestamp:
+                        event.update({"timestamp": timestamp})
+                    try:
+                        self._record_event(event, "FeaturesLabelsTypes")
+                    except Exception as e:
+                        print(e)
 
         data_dict = inference_data.to_dict("records")
-
-        if self.first_record:
-            self.first_record = False
-            columns_types = self._calc_columns_types(
-                inference_data.drop(
-                    columns=["inference_identifier", "index"], errors="ignore"
-                )
-            )
-            for name, types in columns_types.items():
-                event = {"columnName": name, "columnType": types}
-                event.update(self.static_metadata)
-                if timestamp:
-                    event.update({"timestamp": timestamp})
-                try:
-                    self._record_event(event, "InferenceData")
-                except Exception as e:
-                    print(e)
-
+        table_name = "InferenceData"
+        message = "inference data sent successfully"
+        if "data_set_name" in kwargs:
+            table_name = "DataSets"
+            message = f'data set "{kwargs["data_set_name"]}" sent successfully'
         for event in data_dict:
             event.update(self.static_metadata)
+            if "data_set_name" in kwargs:
+                event.update({"dataSetName": kwargs["data_set_name"]})
             if timestamp:
                 event.update({"timestamp": timestamp})
             if calling_method:
@@ -278,10 +289,10 @@ class MLPerformanceMonitoring:
             if len(event) > 255:
                 raise ValueError("Max attributes number per row is 255")
             try:
-                self._record_event(event, "InferenceData")
+                self._record_event(event, table_name)
             except Exception as e:
                 print(e)
-        print("inference data sent successfully")
+        print(message)
 
     def record_metrics(
         self,
@@ -307,12 +318,7 @@ class MLPerformanceMonitoring:
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
         """This method call the model 'prdict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
-        x = (
-            X.drop(kwargs["inference_identifier"], axis=1)
-            if "inference_identifier" in kwargs
-            else X
-        )
-        y_pred = self.model.predict(x)
+        y_pred = self.model.predict(X)
         self.record_inference_data(X, y_pred, **kwargs)
         return y_pred
 
