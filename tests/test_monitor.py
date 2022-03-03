@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -5,6 +7,7 @@ from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 
 metadata = {"environment": "aws", "dataset": "iris", "version": "1.0"}
 
+warnings.filterwarnings("ignore")
 monitor = MLPerformanceMonitoring(
     insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     model_name="Iris RandomForestClassifier",
@@ -12,6 +15,7 @@ monitor = MLPerformanceMonitoring(
 )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_insert_key():
     with pytest.raises(Exception) as insert_key_type:
         MLPerformanceMonitoring(
@@ -35,6 +39,7 @@ def test_init_insert_key():
     )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_model_name():
     with pytest.raises(Exception) as model_name_missing:
         MLPerformanceMonitoring(
@@ -55,6 +60,7 @@ def test_init_model_name():
     assert model_name_type.value.args[0] == "model_name instance type must be str"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_metadata():
     with pytest.raises(Exception) as metadata_type:
         MLPerformanceMonitoring(
@@ -68,6 +74,7 @@ def test_init_metadata():
     )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_init_output_type():
     assert isinstance(
         MLPerformanceMonitoring(
@@ -136,6 +143,44 @@ def test_record_inference_data_x_y_same_length():
 
 
 def test_record_inference_data():
+    monitor.record_inference_data(
+        X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
+        y=np.array([11, 12, 5, 2]),
+    )
+
+
+def test_features_and_labels_columns_langth():
+    with pytest.raises(Exception) as X_features_columns_length:
+        monitor.features_columns = ["a", "b", "c", "d", "e"]
+        monitor.labels_columns = ["f", "g"]
+
+        monitor.record_inference_data(
+            X=np.array(
+                [[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]
+            ),
+            y=np.array([11, 12, 5, 2]),
+        )
+    assert (
+        X_features_columns_length.value.args[0]
+        == "X columns number and features_columns list must have the same length"
+    )
+
+    with pytest.raises(Exception) as y_labels_columns_length:
+        monitor.features_columns = ["a", "b", "c", "d"]
+        monitor.labels_columns = ["e", "f"]
+        monitor.record_inference_data(
+            X=np.array(
+                [[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]
+            ),
+            y=np.array([11, 12, 5, 2]),
+        )
+    assert (
+        y_labels_columns_length.value.args[0]
+        == "y columns number and labels_columns list must have the same length"
+    )
+
+    monitor.features_columns = ["a", "b", "c", "d"]
+    monitor.labels_columns = ["e"]
     monitor.record_inference_data(
         X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
         y=np.array([11, 12, 5, 2]),
