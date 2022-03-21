@@ -103,7 +103,6 @@ class MLPerformanceMonitoring:
         self.model = model
         self.send_inference_data = send_inference_data
         self.send_data_metrics = send_data_metrics
-        self.first_record = True
         self.model_name = model_name
         self.static_metadata = metadata
         self.features_columns = features_columns
@@ -313,8 +312,14 @@ class MLPerformanceMonitoring:
                 else [str(int) for int in range(len(X[0]))],
             )
 
+        columns_types = self._calc_columns_types(
+            X.drop(columns=["inference_identifier", "index"], errors="ignore")
+        )
+
         X_df = X.stack().reset_index()
         X_df.columns = ["inference_id", "feature_name", "feature_value"]
+        X_df["feature_type"] = X_df["feature_name"].map(columns_types)
+
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
 
         if inference_identifier:
@@ -340,7 +345,7 @@ class MLPerformanceMonitoring:
         y_df["label_type"] = self.label_type
         y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
         inference_data = pd.concat([X_df, y_df], axis=1)
-        if self.send_data_metrics:
+        if True:
             if len(inference_data) >= data_summary_min_rows:
                 self.df_statistics = self._calc_descriptive_statistics(
                     inference_data.drop(
@@ -364,22 +369,6 @@ class MLPerformanceMonitoring:
             return
         inference_data.reset_index(level=0, inplace=True)
 
-        if self.first_record:
-            self.first_record = False
-            columns_types = self._calc_columns_types(
-                inference_data.drop(
-                    columns=["inference_identifier", "index"], errors="ignore"
-                )
-            )
-            for name, types in columns_types.items():
-                event = {"columnName": name, "columnType": types}
-                event.update(self.static_metadata)
-                if timestamp:
-                    event.update({"timestamp": timestamp})
-                try:
-                    self._record_event(event, "InferenceData")
-                except Exception as e:
-                    print(e)
         events = self.prepare_events(X_df, y_df, self.model_name, timestamp=timestamp)
         try:
             self.event_client.send_batch(events)
