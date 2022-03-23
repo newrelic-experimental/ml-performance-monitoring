@@ -9,6 +9,7 @@ monitor = MLPerformanceMonitoring(
     insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     model_name="Iris RandomForestClassifier",
     metadata=metadata,
+    label_type="categorical",
 )
 
 
@@ -18,6 +19,7 @@ def test_init_insert_key():
             insert_key=123456789,
             model_name="Iris RandomForestClassifier",
             metadata=metadata,
+            label_type="categorical",
         )
     assert (
         insert_key_type.value.args[0]
@@ -28,6 +30,7 @@ def test_init_insert_key():
         MLPerformanceMonitoring(
             model_name="Iris RandomForestClassifier",
             metadata=metadata,
+            label_type="categorical",
         )
     assert (
         insert_key_missing.value.args[0]
@@ -40,6 +43,7 @@ def test_init_model_name():
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             metadata=metadata,
+            label_type="categorical",
         )
     assert (
         model_name_missing.value.args[0]
@@ -51,6 +55,7 @@ def test_init_model_name():
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name=123456789,
             metadata=metadata,
+            label_type="categorical",
         )
     assert model_name_type.value.args[0] == "model_name instance type must be str"
 
@@ -61,6 +66,7 @@ def test_init_metadata():
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
             metadata=123456789,
+            label_type="categorical",
         )
     assert (
         metadata_type.value.args[0]
@@ -73,6 +79,7 @@ def test_init_output_type():
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
+            label_type="categorical",
         ),
         MLPerformanceMonitoring,
     )
