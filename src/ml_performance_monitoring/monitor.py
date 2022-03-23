@@ -191,8 +191,7 @@ class MLPerformanceMonitoring:
 
     def _calc_columns_types(self, df):
         columns_types = (
-            df.drop(columns=["inference_identifier"], errors="ignore")
-            .dtypes.apply(str)
+            df.dtypes.apply(str)
             .replace(
                 {r"^(float|int).*": "numeric", "object": "categorical"}, regex=True
             )
@@ -282,8 +281,6 @@ class MLPerformanceMonitoring:
         X: Union[pd.core.frame.DataFrame, np.ndarray],
         y: Union[pd.core.frame.DataFrame, np.ndarray],
         *,
-        calling_method=None,
-        inference_identifier=None,
         data_summary_min_rows: int = 100,
         timestamp: int = None,
     ):
@@ -313,7 +310,7 @@ class MLPerformanceMonitoring:
             )
 
         columns_types = self._calc_columns_types(
-            X.drop(columns=["inference_identifier", "index"], errors="ignore")
+            X.drop(columns=["index"], errors="ignore")
         )
 
         X_df = X.stack().reset_index()
@@ -321,13 +318,6 @@ class MLPerformanceMonitoring:
         X_df["feature_type"] = X_df["feature_name"].map(columns_types)
 
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
-
-        if inference_identifier:
-            X_df.rename(
-                {f"feature_{inference_identifier}": "inference_identifier"},
-                axis=1,
-                inplace=True,
-            )
 
         if not isinstance(y, pd.core.frame.DataFrame):
             labels_columns = (
@@ -344,23 +334,24 @@ class MLPerformanceMonitoring:
         y_df.columns = ["inference_id", "label_name", "label_value"]
         y_df["label_type"] = self.label_type
         y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
-        inference_data = pd.concat([X_df, y_df], axis=1)
-        if True:
+        inference_data = pd.concat([X, y], axis=1)
+        if self.send_data_metrics:
             if len(inference_data) >= data_summary_min_rows:
-                self.df_statistics = self._calc_descriptive_statistics(
-                    inference_data.drop(
-                        columns=["inference_identifier"], errors="ignore"
-                    )
-                )
+                self.df_statistics = self._calc_descriptive_statistics(inference_data)
                 for name, metrics in self.df_statistics.to_dict().items():
                     metadata = {**self.static_metadata, "name": name}
                     metrics["types"] = FEATURE_TYPE.get(metrics["types"])
                     self.record_metrics(
-                        metrics=metrics, metadata=metadata, data_metric=True
+                        metrics=metrics,
+                        metadata=metadata,
+                        data_metric=True,
+                        successfully_message=False,
                     )
+                print("data_metric sent successfully")
+
             else:
                 warnings.warn(
-                    "send_data_metrics occurs only when there are at least 100 rows"
+                    f"send_data_metrics occurs only when there are at least {data_summary_min_rows} rows. To change this constraint please update the variable 'data_summary_min_rows' in the fuction call"
                 )
         if not self.send_inference_data:
             warnings.warn(
@@ -382,6 +373,7 @@ class MLPerformanceMonitoring:
         metrics: Dict[str, Any],
         metadata: Dict[str, Any] = None,
         data_metric: bool = False,
+        successfully_message: bool = True,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
         metric_type = "data_metric" if data_metric else "model_metric"
@@ -397,16 +389,12 @@ class MLPerformanceMonitoring:
                 self.metric_batch.record_gauge(metric, value, metadata)
             except Exception as e:
                 print(e)
-        print(f"{metric_type} sent successfully")
+        if successfully_message:
+            print(f"{metric_type} sent successfully")
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
         """This method call the model 'prdict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
-        x = (
-            X.drop(kwargs["inference_identifier"], axis=1)
-            if "inference_identifier" in kwargs
-            else X
-        )
-        y_pred = self.model.predict(x)
+        y_pred = self.model.predict(X)
         self.record_inference_data(X, y_pred, **kwargs)
         return y_pred
 
