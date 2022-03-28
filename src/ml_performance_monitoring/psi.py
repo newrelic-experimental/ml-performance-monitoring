@@ -4,8 +4,8 @@ import numpy as np
 def calculate_psi(expected, actual, buckettype="bins", buckets=10, axis=0):
     """Calculate the PSI (population stability index) across all variables
     Args:
-       expected: numpy matrix of original values (Training)
-       actual: numpy matrix of new values, same size as expected (Validation)
+       expected: numpy matrix of original values (training)
+       actual: numpy matrix of new values, same size as expected (validation)
        buckettype: type of strategy for creating buckets, bins splits into even splits, quantiles splits into quantile buckets
        buckets: number of quantiles to use in bucketing variables
        axis: axis by which variables are defined, 0 for vertical, 1 for horizontal
