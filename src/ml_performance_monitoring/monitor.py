@@ -373,16 +373,20 @@ class MLPerformanceMonitoring:
         metrics: Dict[str, Any],
         metadata: Dict[str, Any] = None,
         data_metric: bool = False,
+        feature_name: str = None,
         successfully_message: bool = True,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
         metric_type = "data_metric" if data_metric else "model_metric"
         metadata = metadata if metadata else {**self.static_metadata}
+
         metadata.update(
             {
                 "metricType": metric_type,
             }
         )
+        if feature_name is not None:
+            metadata.update({"feature_name": feature_name})
 
         for metric, value in metrics.items():
             try:
