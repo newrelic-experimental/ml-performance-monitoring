@@ -9,8 +9,8 @@ import pytest
 def record_event_monkeypatch(monkeypatch):
     def record_event_monkeypatch_inner(
         self,
-        X: Union[pd.core.frame.DataFrame, np.ndarray],
-        y: Union[pd.core.frame.DataFrame, np.ndarray],
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray],
         *,
         calling_method=None,
         inference_identifier=None,
