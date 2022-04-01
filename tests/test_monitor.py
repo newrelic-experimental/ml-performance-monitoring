@@ -113,10 +113,7 @@ def test_record_inference_data_x_y_missing():
 def test_record_inference_data_x_y_type():
     with pytest.raises(Exception) as X_type:
         monitor.record_inference_data(X=123456789, y=np.array([11, 12, 5, 2, 4]))
-    assert (
-        X_type.value.args[0]
-        == "X instance type must be pd.core.frame.DataFrame or np.ndarray"
-    )
+    assert X_type.value.args[0] == "X instance type must be pd.DataFrame or np.ndarray"
 
     with pytest.raises(Exception) as y_type:
         monitor.record_inference_data(
@@ -125,10 +122,7 @@ def test_record_inference_data_x_y_type():
             ),
             y=123456789,
         )
-    assert (
-        y_type.value.args[0]
-        == "y instance type must be pd.core.frame.DataFrame or np.ndarray"
-    )
+    assert y_type.value.args[0] == "y instance type must be pd.DataFrame or np.ndarray"
 
 
 def test_record_inference_data_x_y_same_length():

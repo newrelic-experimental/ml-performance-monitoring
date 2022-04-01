@@ -21,7 +21,7 @@ from newrelic_telemetry_sdk.event import Event
 class MetaEnum(EnumMeta):
     def __contains__(cls, item):
         try:
-            cls(item)
+            cls(item)  # type: ignore
         except ValueError:
             return False
         return True
@@ -33,7 +33,7 @@ class BaseEnum(Enum, metaclass=MetaEnum):
 
 class LabelType(str, BaseEnum):
     categorical = "categorical"
-    regrssion = "regrssion"
+    regression = "regression"
 
 
 FEATURE_TYPE = {
@@ -51,17 +51,17 @@ class MLPerformanceMonitoring:
     def __init__(
         self,
         model_name: str,
-        insert_key: str = None,
+        insert_key: Optional[str] = None,
         metadata: Dict[str, Any] = {},
         staging: bool = False,
         model=None,
         send_inference_data=True,
         send_data_metrics=False,
-        features_columns: List[str] = None,
-        labels_columns: List[str] = None,
-        label_type: str = None,
-        event_client_host: str = None,
-        metric_client_host: str = None,
+        features_columns: Optional[List[str]] = None,
+        labels_columns: Optional[List[str]] = None,
+        label_type: Optional[str] = None,
+        event_client_host: Optional[str] = None,
+        metric_client_host: Optional[str] = None,
     ):
 
         if not model:
@@ -111,7 +111,7 @@ class MLPerformanceMonitoring:
 
     def _set_insert_key(
         self,
-        insert_key: str = None,
+        insert_key: Optional[str] = None,
     ):
         self.insert_key = insert_key or os.getenv("NEW_RELIC_INSERT_KEY")  # type: ignore
 
@@ -215,7 +215,7 @@ class MLPerformanceMonitoring:
         request_id: str,
         model_name: str,
         model_version: Optional[str] = None,
-        timestamp: int = None,
+        timestamp: Optional[int] = None,
         event_name: str = EventName,
         params: Optional[Dict[str, Any]] = None,
     ) -> Event:
@@ -240,7 +240,7 @@ class MLPerformanceMonitoring:
         y: pd.DataFrame,
         model_name: str,
         model_version: Optional[str] = None,
-        timestamp: int = None,
+        timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Sequence[Event]:
         events: List[Event] = []
@@ -278,11 +278,11 @@ class MLPerformanceMonitoring:
 
     def record_inference_data(
         self,
-        X: Union[pd.core.frame.DataFrame, np.ndarray],
-        y: Union[pd.core.frame.DataFrame, np.ndarray],
+        X: Union[pd.DataFrame, np.ndarray],
+        y: Union[pd.DataFrame, np.ndarray],
         *,
         data_summary_min_rows: int = 100,
-        timestamp: int = None,
+        timestamp: Optional[int] = None,
     ):
         """This method send inference data to the table "InferenceData" in New Relic NRDB"""
         self.static_metadata.update(
@@ -291,17 +291,13 @@ class MLPerformanceMonitoring:
                 "instrumentation.provider": "nr_performance_monitoring",
             }
         )
-        if not isinstance(X, (pd.core.frame.DataFrame, np.ndarray)):
-            raise TypeError(
-                "X instance type must be pd.core.frame.DataFrame or np.ndarray"
-            )
-        if not isinstance(y, (pd.core.frame.DataFrame, np.ndarray)):
-            raise TypeError(
-                "y instance type must be pd.core.frame.DataFrame or np.ndarray"
-            )
+        if not isinstance(X, (pd.DataFrame, np.ndarray)):
+            raise TypeError("X instance type must be pd.DataFrame or np.ndarray")
+        if not isinstance(y, (pd.DataFrame, np.ndarray)):
+            raise TypeError("y instance type must be pd.DataFrame or np.ndarray")
         if len(X) != len(y):
             raise ValueError("X and y must have the same length")
-        if not isinstance(X, pd.core.frame.DataFrame):
+        if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(
                 list(map(np.ravel, X)),
                 columns=self.features_columns
@@ -319,7 +315,7 @@ class MLPerformanceMonitoring:
 
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
 
-        if not isinstance(y, pd.core.frame.DataFrame):
+        if not isinstance(y, pd.DataFrame):
             labels_columns = (
                 self.labels_columns
                 if self.labels_columns
@@ -371,9 +367,9 @@ class MLPerformanceMonitoring:
     def record_metrics(
         self,
         metrics: Dict[str, Any],
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
         data_metric: bool = False,
-        feature_name: str = None,
+        feature_name: Optional[str] = None,
         successfully_message: bool = True,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
@@ -397,7 +393,7 @@ class MLPerformanceMonitoring:
             print(f"{metric_type} sent successfully")
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
-        """This method call the model 'prdict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
+        """This method call the model 'predict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
         y_pred = self.model.predict(X)
         self.record_inference_data(X, y_pred, **kwargs)
         return y_pred
@@ -431,17 +427,17 @@ class MLPerformanceMonitoring:
 
 def wrap_model(
     model_name: str,
-    insert_key: str = None,
+    insert_key: Optional[str] = None,
     metadata: Dict[str, Any] = {},
     staging: bool = False,
     model=None,
     send_inference_data=True,
     send_data_metrics=False,
-    features_columns: List[str] = None,
-    labels_columns: List[str] = None,
-    label_type: str = None,
-    event_client_host: str = None,
-    metric_client_host: str = None,
+    features_columns: Optional[List[str]] = None,
+    labels_columns: Optional[List[str]] = None,
+    label_type: Optional[str] = None,
+    event_client_host: Optional[str] = None,
+    metric_client_host: Optional[str] = None,
 ) -> MLPerformanceMonitoring:
     """This is a wrapper function that extends the model/pipeline methods with the functionality of sending the inference data to the table "InferenceData" in New Relic NRDB"""
     return MLPerformanceMonitoring(
