@@ -213,7 +213,7 @@ class MLPerformanceMonitoring:
         t: Tuple[Any, ...],
         columns: Sequence[str],
         request_id: str,
-        model_name: str,
+        metadata: Dict[str, Any],
         model_version: Optional[str] = None,
         timestamp: Optional[int] = None,
         event_name: str = EventName,
@@ -222,23 +222,21 @@ class MLPerformanceMonitoring:
         d = dict(zip(columns, t))
         d["instrumentation.provider"] = "nr_performance_monitoring"
 
-        d["modelName"] = model_name
         d["request_id"] = request_id
         if model_version is not None:
             d["model_version"] = model_version
-        if timestamp is not None:
-            d["timestamp"] = timestamp
+        d.update(metadata)
         if params is not None:
             for k in params:
                 d[f"parmas_{k}"] = params[k]
 
-        return Event(event_name, d)
+        return Event(event_name, d, timestamp_ms=timestamp)
 
     def prepare_events(
         self,
         flat: pd.DataFrame,
         y: pd.DataFrame,
-        model_name: str,
+        metadata: Dict[str, Any],
         model_version: Optional[str] = None,
         timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
@@ -255,7 +253,7 @@ class MLPerformanceMonitoring:
                     t,
                     flat.columns.to_list(),
                     request_id,
-                    model_name,
+                    metadata,
                     model_version,
                     timestamp,
                 )
@@ -267,7 +265,7 @@ class MLPerformanceMonitoring:
                     s,
                     y.columns.to_list(),
                     request_id,
-                    model_name,
+                    metadata,
                     model_version,
                     timestamp,
                     params=params,
@@ -356,7 +354,9 @@ class MLPerformanceMonitoring:
             return
         inference_data.reset_index(level=0, inplace=True)
 
-        events = self.prepare_events(X_df, y_df, self.model_name, timestamp=timestamp)
+        events = self.prepare_events(
+            X_df, y_df, metadata=self.static_metadata, timestamp=timestamp
+        )
         try:
             self.event_client.send_batch(events)
         except Exception as e:
