@@ -385,6 +385,8 @@ class MLPerformanceMonitoring:
         for metric, value in metrics.items():
             metrics_batch.append(
                 GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
+                if timestamp
+                else GaugeMetric(metric, value, metadata)
             )
         try:
             self.metric_client.send_batch(metrics_batch)
