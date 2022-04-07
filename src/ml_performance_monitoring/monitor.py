@@ -11,6 +11,7 @@ import pandas as pd
 from newrelic_telemetry_sdk import (
     EventBatch,
     EventClient,
+    GaugeMetric,
     Harvester,
     MetricBatch,
     MetricClient,
@@ -363,6 +364,7 @@ class MLPerformanceMonitoring:
     def record_metrics(
         self,
         metrics: Dict[str, Any],
+        timestamp: int = None,
         metadata: Optional[Dict[str, Any]] = None,
         data_metric: bool = False,
         feature_name: Optional[str] = None,
@@ -379,12 +381,15 @@ class MLPerformanceMonitoring:
         )
         if feature_name is not None:
             metadata.update({"feature_name": feature_name})
-
+        metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
-            try:
-                self.metric_batch.record_gauge(metric, value, metadata)
-            except Exception as e:
-                print(e)
+            metrics_batch.append(
+                GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
+            )
+        try:
+            self.metric_client.send_batch(metrics_batch)
+        except Exception as e:
+            print(e)
         if successfully_message:
             print(f"{metric_type} sent successfully")
 
