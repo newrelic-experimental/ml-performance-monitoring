@@ -34,7 +34,7 @@ class BaseEnum(Enum, metaclass=MetaEnum):
 
 class LabelType(str, BaseEnum):
     categorical = "categorical"
-    regression = "regression"
+    numeric = "numeric"
 
 
 FEATURE_TYPE = {
