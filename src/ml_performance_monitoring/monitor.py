@@ -276,6 +276,7 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
+        model_version: Optional[str] = None,
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
@@ -352,7 +353,7 @@ class MLPerformanceMonitoring:
         inference_data.reset_index(level=0, inplace=True)
 
         events = self.prepare_events(
-            X_df, y_df, metadata=self.static_metadata, timestamp=timestamp
+            X_df, y_df, metadata=self.static_metadata, model_version=model_version, timestamp=timestamp
         )
         try:
             self.event_client.send_batch(events)
