@@ -1,5 +1,6 @@
 import atexit
 import datetime
+import logging
 import os
 import uuid
 import warnings
@@ -17,6 +18,9 @@ from newrelic_telemetry_sdk import (
     MetricClient,
 )
 from newrelic_telemetry_sdk.event import Event
+
+
+logger = logging.getLogger("ml_performance_monitoring")
 
 
 class MetaEnum(EnumMeta):
@@ -63,6 +67,7 @@ class MLPerformanceMonitoring:
         label_type: Optional[str] = None,
         event_client_host: Optional[str] = None,
         metric_client_host: Optional[str] = None,
+        use_logger: Optional[bool] = None
     ):
 
         if not model:
@@ -105,6 +110,7 @@ class MLPerformanceMonitoring:
         self.features_columns = features_columns
         self.labels_columns = labels_columns
         self.label_type = label_type
+        self.use_logger = use_logger if use_logger is not None else False
 
     def _set_insert_key(
         self,
@@ -117,6 +123,12 @@ class MLPerformanceMonitoring:
         ) or self.insert_key is None:
             raise TypeError("insert_key instance type must str and not None")
         self._start()
+
+    def _log(self, msg: str):
+        if self.use_logger:
+            logger.info(msg)
+        else:
+            print(msg)
 
     # initialize event thread
     def _start(self):
@@ -339,7 +351,7 @@ class MLPerformanceMonitoring:
                         data_metric=True,
                         successfully_message=False,
                     )
-                print("data_metric sent successfully")
+                self._log("data_metric sent successfully")
 
             else:
                 warnings.warn(
@@ -358,9 +370,9 @@ class MLPerformanceMonitoring:
         try:
             self.event_client.send_batch(events)
         except Exception as e:
-            print(e)
+            self._log(e)
 
-        print("inference data sent successfully")
+        self._log("inference data sent successfully")
 
     def record_metrics(
         self,
@@ -392,9 +404,9 @@ class MLPerformanceMonitoring:
         try:
             self.metric_client.send_batch(metrics_batch)
         except Exception as e:
-            print(e)
+            self._log(e)
         if successfully_message:
-            print(f"{metric_type} sent successfully")
+            self._log(f"{metric_type} sent successfully")
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
         """This method call the model 'predict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
