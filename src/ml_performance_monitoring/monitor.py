@@ -19,7 +19,6 @@ from newrelic_telemetry_sdk import (
 )
 from newrelic_telemetry_sdk.event import Event
 
-
 logger = logging.getLogger("ml_performance_monitoring")
 
 
@@ -67,7 +66,7 @@ class MLPerformanceMonitoring:
         label_type: Optional[str] = None,
         event_client_host: Optional[str] = None,
         metric_client_host: Optional[str] = None,
-        use_logger: Optional[bool] = None
+        use_logger: Optional[bool] = None,
     ):
 
         if not model:
@@ -365,12 +364,16 @@ class MLPerformanceMonitoring:
         inference_data.reset_index(level=0, inplace=True)
 
         events = self.prepare_events(
-            X_df, y_df, metadata=self.static_metadata, model_version=model_version, timestamp=timestamp
+            X_df,
+            y_df,
+            metadata=self.static_metadata,
+            model_version=model_version,
+            timestamp=timestamp,
         )
         try:
             self.event_client.send_batch(events)
         except Exception as e:
-            self._log(e)
+            self._log(str(e))
 
         self._log("inference data sent successfully")
 
@@ -404,7 +407,7 @@ class MLPerformanceMonitoring:
         try:
             self.metric_client.send_batch(metrics_batch)
         except Exception as e:
-            self._log(e)
+            self._log(str(e))
         if successfully_message:
             self._log(f"{metric_type} sent successfully")
 
