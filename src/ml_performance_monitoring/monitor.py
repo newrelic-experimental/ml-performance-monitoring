@@ -92,11 +92,11 @@ class MLPerformanceMonitoring:
                 f"label_type instance must be one of the values: {[e.value for e in LabelType]}"
             )
 
-        self.event_client_host = metric_client_host or os.getenv(
+        self.event_client_host =  event_client_host or os.getenv(
             "EVENT_CLIENT_HOST", EventClient.HOST
         )
 
-        self.metric_client_host = event_client_host or os.getenv(
+        self.metric_client_host = metric_client_host or os.getenv(
             "METRIC_CLIENT_HOST", MetricClient.HOST
         )
 
