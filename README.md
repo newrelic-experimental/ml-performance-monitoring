@@ -16,6 +16,16 @@ To start, the ml-performance-monitoring package must be installed. To install th
 
 If not, please send it as a parameter at the MLPerformanceMonitoring call.
 
+* ``EVENT_CLIENT_HOST`` and ``METRIC_CLIENT_HOST``
+  * US region account (default)-
+    * ``EVENT_CLIENT_HOST``: insights-collector.newrelic.com
+    * ``METRIC_CLIENT_HOST``: metric-api.newrelic.com
+  * EU region account-
+    * ``EVENT_CLIENT_HOST``: insights-collector.eu01.nr-data.net
+    * ``METRIC_CLIENT_HOST``: metric-api.eu.newrelic.com/metric/v1
+
+can also be sent as parameters at the MLPerformanceMonitoring call.
+
 2. The example uses the libraries: numpy, pandas, sklearn, xgboost
 
 
@@ -76,6 +86,7 @@ ml_performence_monitor_model = wrap_model(
     send_data_metrics=True,
     features_columns=features_columns,
     labels_columns=labels_columns,
+    label_type="numeric",
 )
 
 y_pred = ml_performence_monitor_model.predict(
