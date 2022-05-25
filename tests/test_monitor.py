@@ -1,7 +1,10 @@
+import uuid
+from unittest import mock
+
 import numpy as np
 import pytest
 
-from ml_performance_monitoring.monitor import MLPerformanceMonitoring
+from src.ml_performance_monitoring.monitor import MLPerformanceMonitoring
 
 metadata = {"environment": "aws", "dataset": "iris", "version": "1.0"}
 
@@ -141,3 +144,28 @@ def test_record_inference_data():
         X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
         y=np.array([11, 12, 5, 2]),
     )
+
+
+def is_valid_uuid(val):
+    try:
+        uuid.UUID(str(val))
+        return True
+    except ValueError:
+        return False
+
+
+def test_uuid_as_inference_id():
+    prep_events_mock = mock.Mock()
+    monitor.prepare_events = prep_events_mock
+
+    monitor.record_inference_data(
+        X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
+        y=np.array([11, 12, 5, 2]),
+    )
+
+    x_df, y_df = prep_events_mock.mock_calls[0][1][0], prep_events_mock.mock_calls[0][1][1]
+
+    assert is_valid_uuid(x_df['inference_id'].astype('str').iloc[0])
+    assert is_valid_uuid(y_df['inference_id'].astype('str').iloc[0])
+    assert x_df['inference_id'].astype('str').iloc[0] == y_df['inference_id'].astype('str').iloc[0]
+    assert len(x_df['inference_id'].unique()) == 4

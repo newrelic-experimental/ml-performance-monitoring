@@ -319,7 +319,8 @@ class MLPerformanceMonitoring:
         X_df = X.stack().reset_index()
         X_df.columns = ["inference_id", "feature_name", "feature_value"]
         X_df["feature_type"] = X_df["feature_name"].map(columns_types)
-
+        infid_to_uuid = {infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()}
+        X_df["inference_id"] = X_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
 
         if not isinstance(y, pd.DataFrame):
@@ -336,6 +337,7 @@ class MLPerformanceMonitoring:
         y_df = y.stack().reset_index()
         y_df.columns = ["inference_id", "label_name", "label_value"]
         y_df["label_type"] = self.label_type
+        y_df["inference_id"] = y_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
         inference_data = pd.concat([X, y], axis=1)
         if self.send_data_metrics:
