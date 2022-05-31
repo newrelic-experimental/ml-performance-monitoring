@@ -4,7 +4,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from src.ml_performance_monitoring.monitor import MLPerformanceMonitoring
+from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 
 metadata = {"environment": "aws", "dataset": "iris", "version": "1.0"}
 
