@@ -200,9 +200,11 @@ class MLPerformanceMonitoring:
     def _calc_columns_types(self, df):
         columns_types = (
             df.dtypes.apply(str)
-            .replace(
-                {r"^(float|int).*": "numeric", "object": "categorical"}, regex=True
-            )
+            .replace({
+                r"^.*(float|int|complex).*": "numeric",
+                r"^(object|bool|category).*": "categorical",
+                r"^(date).*": "datetime"
+            }, regex=True)
             .rename("types")
         )
         return columns_types

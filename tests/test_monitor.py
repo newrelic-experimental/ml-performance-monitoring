@@ -1,7 +1,9 @@
 import uuid
 from unittest import mock
+from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from ml_performance_monitoring.monitor import MLPerformanceMonitoring
@@ -169,3 +171,52 @@ def test_uuid_as_inference_id():
     assert is_valid_uuid(y_df['inference_id'].astype('str').iloc[0])
     assert x_df['inference_id'].astype('str').iloc[0] == y_df['inference_id'].astype('str').iloc[0]
     assert len(x_df['inference_id'].unique()) == 4
+
+
+def test_pandas_feature_types_conversion():
+    prepare_events_mock = mock.Mock()
+    monitor.prepare_events = prepare_events_mock
+
+    df = pd.DataFrame(
+        {
+            "string": list("abc"),
+            "int64": list(range(1, 4)),
+            "uint8": np.arange(3, 6).astype("u1"),
+            "float64": np.arange(4.0, 7.0),
+            "bool1": [True, False, True],
+            "bool2": [False, True, False],
+            "dates": pd.date_range("now", periods=3),
+            "category": pd.Series(list("ABC")).astype("category"),
+        }
+    )
+
+    monitor.record_inference_data(
+        X=df,
+        y=pd.DataFrame({'a': [0, 1, 0]})
+    )
+
+    X_df = prepare_events_mock.call_args[0][0]
+    feature_types = set(X_df['feature_type'].tolist())
+    assert feature_types.difference({'numeric', 'categorical', 'datetime'}) == set()
+
+
+def test_numpy_feature_types_conversion():
+    prepare_events_mock = mock.Mock()
+    monitor.prepare_events = prepare_events_mock
+
+    arr = np.asarray([
+        [np.complex64(1), np.complex128(3), complex(1, 2), complex(234, 2)],
+        [np.float16(3.4), np.float32(5.4), np.float64(5.3), float(23.2)],
+        [np.int8(3), np.int16(3), np.int32(23), np.int64(54)],
+        [np.uint8(3), np.uint16(5), np.uint32(42), np.uint64(43)],
+        [bool(True), object, str("string"), np.compat.unicode(32)]
+    ])
+
+    monitor.record_inference_data(
+        X=arr.T,
+        y=pd.DataFrame({'a': [0, 1, 0, 3]})
+    )
+
+    X_df = prepare_events_mock.call_args[0][0]
+    feature_types = set(X_df['feature_type'].tolist())
+    assert feature_types.difference({'numeric', 'categorical'}) == set()
