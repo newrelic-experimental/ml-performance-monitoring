@@ -76,7 +76,7 @@ class MLPerformanceMonitoring:
             )
         if not isinstance(model_name, str):
             raise TypeError("model_name instance type must be str")
-        if not isinstance(model_name, str):
+        if not isinstance(model_version, str):
             raise TypeError("model_version instance type must be str")
         if not isinstance(metadata, Dict) and metadata is not None:
             raise TypeError("metadata instance type must be Dict[str, Any] or None")

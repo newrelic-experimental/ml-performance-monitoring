@@ -11,6 +11,7 @@ metadata = {"environment": "aws", "dataset": "iris", "version": "1.0"}
 monitor = MLPerformanceMonitoring(
     insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     model_name="Iris RandomForestClassifier",
+    model_version="1.0.0",
     metadata=metadata,
     label_type="categorical",
 )
@@ -21,6 +22,7 @@ def test_init_insert_key():
         MLPerformanceMonitoring(
             insert_key=123456789,
             model_name="Iris RandomForestClassifier",
+            model_version="1.0.0",
             metadata=metadata,
             label_type="categorical",
         )
@@ -32,6 +34,7 @@ def test_init_insert_key():
     with pytest.raises(Exception) as insert_key_missing:
         MLPerformanceMonitoring(
             model_name="Iris RandomForestClassifier",
+            model_version="1.0.0",
             metadata=metadata,
             label_type="categorical",
         )
@@ -45,6 +48,7 @@ def test_init_model_name():
     with pytest.raises(Exception) as model_name_missing:
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            model_version="1.0.0",
             metadata=metadata,
             label_type="categorical",
         )
@@ -57,10 +61,35 @@ def test_init_model_name():
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name=123456789,
+            model_version="1.0.0",
             metadata=metadata,
             label_type="categorical",
         )
     assert model_name_type.value.args[0] == "model_name instance type must be str"
+
+
+def test_init_model_version():
+    with pytest.raises(Exception) as model_version_missing:
+        MLPerformanceMonitoring(
+            insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            model_name="Iris RandomForestClassifier",
+            metadata=metadata,
+            label_type="categorical",
+        )
+    assert (
+        model_version_missing.value.args[0]
+        == "__init__() missing 1 required positional argument: 'model_version'"
+    )
+
+    with pytest.raises(Exception) as model_version_type:
+        MLPerformanceMonitoring(
+            insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            model_name="Iris RandomForestClassifier",
+            model_version=123456789,
+            metadata=metadata,
+            label_type="categorical",
+        )
+    assert model_version_type.value.args[0] == "model_version instance type must be str"
 
 
 def test_init_metadata():
@@ -68,6 +97,7 @@ def test_init_metadata():
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
+            model_version="1.0.0",
             metadata=123456789,
             label_type="categorical",
         )
@@ -82,6 +112,7 @@ def test_init_output_type():
         MLPerformanceMonitoring(
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
+            model_version="1.0.0",
             label_type="categorical",
         ),
         MLPerformanceMonitoring,
@@ -163,9 +194,15 @@ def test_uuid_as_inference_id():
         y=np.array([11, 12, 5, 2]),
     )
 
-    x_df, y_df = prep_events_mock.mock_calls[0][1][0], prep_events_mock.mock_calls[0][1][1]
+    x_df, y_df = (
+        prep_events_mock.mock_calls[0][1][0],
+        prep_events_mock.mock_calls[0][1][1],
+    )
 
-    assert is_valid_uuid(x_df['inference_id'].astype('str').iloc[0])
-    assert is_valid_uuid(y_df['inference_id'].astype('str').iloc[0])
-    assert x_df['inference_id'].astype('str').iloc[0] == y_df['inference_id'].astype('str').iloc[0]
-    assert len(x_df['inference_id'].unique()) == 4
+    assert is_valid_uuid(x_df["inference_id"].astype("str").iloc[0])
+    assert is_valid_uuid(y_df["inference_id"].astype("str").iloc[0])
+    assert (
+        x_df["inference_id"].astype("str").iloc[0]
+        == y_df["inference_id"].astype("str").iloc[0]
+    )
+    assert len(x_df["inference_id"].unique()) == 4
