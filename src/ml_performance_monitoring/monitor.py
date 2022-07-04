@@ -55,6 +55,7 @@ class MLPerformanceMonitoring:
     def __init__(
         self,
         model_name: str,
+        model_version: str,
         insert_key: Optional[str] = None,
         metadata: Dict[str, Any] = {},
         staging: bool = False,
@@ -75,6 +76,8 @@ class MLPerformanceMonitoring:
             )
         if not isinstance(model_name, str):
             raise TypeError("model_name instance type must be str")
+        if not isinstance(model_name, str):
+            raise TypeError("model_version instance type must be str")
         if not isinstance(metadata, Dict) and metadata is not None:
             raise TypeError("metadata instance type must be Dict[str, Any] or None")
         if not isinstance(staging, bool):
@@ -92,7 +95,7 @@ class MLPerformanceMonitoring:
                 f"label_type instance must be one of the values: {[e.value for e in LabelType]}"
             )
 
-        self.event_client_host =  event_client_host or os.getenv(
+        self.event_client_host = event_client_host or os.getenv(
             "EVENT_CLIENT_HOST", EventClient.HOST
         )
 
@@ -102,6 +105,7 @@ class MLPerformanceMonitoring:
 
         self._set_insert_key(insert_key)
         self.model = model
+        self.model_version = model_version
         self.send_inference_data = send_inference_data
         self.send_data_metrics = send_data_metrics
         self.model_name = model_name
@@ -222,7 +226,6 @@ class MLPerformanceMonitoring:
         columns: Sequence[str],
         request_id: str,
         metadata: Dict[str, Any],
-        model_version: Optional[str] = None,
         timestamp: Optional[int] = None,
         event_name: str = EventName,
         params: Optional[Dict[str, Any]] = None,
@@ -231,8 +234,7 @@ class MLPerformanceMonitoring:
         d["instrumentation.provider"] = "nr_performance_monitoring"
 
         d["request_id"] = request_id
-        if model_version is not None:
-            d["model_version"] = model_version
+        d["model_version"] = self.model_version
         d.update(metadata)
         if params is not None:
             for k in params:
@@ -245,16 +247,12 @@ class MLPerformanceMonitoring:
         flat: pd.DataFrame,
         y: pd.DataFrame,
         metadata: Dict[str, Any],
-        model_version: Optional[str] = None,
         timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Sequence[Event]:
         events: List[Event] = []
 
         request_id = self.get_request_id()
-        if model_version is None:
-            model_version = self.get_version() + "." + self.get_suffix()
-
         for t in flat.itertuples(index=False, name=None):
             events.append(
                 self.tuple_to_event(
@@ -262,7 +260,6 @@ class MLPerformanceMonitoring:
                     flat.columns.to_list(),
                     request_id,
                     metadata,
-                    model_version,
                     timestamp,
                 )
             )
@@ -274,7 +271,6 @@ class MLPerformanceMonitoring:
                     y.columns.to_list(),
                     request_id,
                     metadata,
-                    model_version,
                     timestamp,
                     params=params,
                 )
@@ -287,7 +283,6 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
-        model_version: Optional[str] = None,
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
@@ -319,7 +314,9 @@ class MLPerformanceMonitoring:
         X_df = X.stack().reset_index()
         X_df.columns = ["inference_id", "feature_name", "feature_value"]
         X_df["feature_type"] = X_df["feature_name"].map(columns_types)
-        infid_to_uuid = {infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()}
+        infid_to_uuid = {
+            infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()
+        }
         X_df["inference_id"] = X_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
 
@@ -369,7 +366,6 @@ class MLPerformanceMonitoring:
             X_df,
             y_df,
             metadata=self.static_metadata,
-            model_version=model_version,
             timestamp=timestamp,
         )
         try:
@@ -448,6 +444,7 @@ class MLPerformanceMonitoring:
 
 def wrap_model(
     model_name: str,
+    model_version: str,
     insert_key: Optional[str] = None,
     metadata: Dict[str, Any] = {},
     staging: bool = False,
@@ -463,6 +460,7 @@ def wrap_model(
     """This is a wrapper function that extends the model/pipeline methods with the functionality of sending the inference data to the table "InferenceData" in New Relic NRDB"""
     return MLPerformanceMonitoring(
         model_name,
+        model_version,
         insert_key,
         metadata,
         staging,
