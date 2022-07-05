@@ -74,10 +74,10 @@ class MLPerformanceMonitoring:
             warnings.warn(
                 "model wasn't defined, please use 'record_inference_data' to send data"
             )
-        if not isinstance(model_name, str):
-            raise TypeError("model_name instance type must be str")
-        if not isinstance(model_version, str):
-            raise TypeError("model_version instance type must be str")
+        if not isinstance(model_name, str) or not model_name:
+            raise TypeError("model_name instance type must be str and not empty")
+        if not isinstance(model_version, str) or not model_version:
+            raise TypeError("model_version instance type must be str and not empty")
         if not isinstance(metadata, Dict) and metadata is not None:
             raise TypeError("metadata instance type must be Dict[str, Any] or None")
         if not isinstance(staging, bool):

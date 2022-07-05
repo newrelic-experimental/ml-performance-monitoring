@@ -65,7 +65,23 @@ def test_init_model_name():
             metadata=metadata,
             label_type="categorical",
         )
-    assert model_name_type.value.args[0] == "model_name instance type must be str"
+    assert (
+        model_name_type.value.args[0]
+        == "model_name instance type must be str and not empty"
+    )
+
+    with pytest.raises(Exception) as model_name_type:
+        MLPerformanceMonitoring(
+            insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            model_name="",
+            model_version="1.0.0",
+            metadata=metadata,
+            label_type="categorical",
+        )
+    assert (
+        model_name_type.value.args[0]
+        == "model_name instance type must be str and not empty"
+    )
 
 
 def test_init_model_version():
@@ -89,7 +105,23 @@ def test_init_model_version():
             metadata=metadata,
             label_type="categorical",
         )
-    assert model_version_type.value.args[0] == "model_version instance type must be str"
+    assert (
+        model_version_type.value.args[0]
+        == "model_version instance type must be str and not empty"
+    )
+
+    with pytest.raises(Exception) as model_version_type:
+        MLPerformanceMonitoring(
+            insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            model_name="Iris RandomForestClassifier",
+            model_version="",
+            metadata=metadata,
+            label_type="categorical",
+        )
+    assert (
+        model_version_type.value.args[0]
+        == "model_version instance type must be str and not empty"
+    )
 
 
 def test_init_metadata():
