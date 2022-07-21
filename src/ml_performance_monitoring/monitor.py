@@ -178,12 +178,12 @@ class MLPerformanceMonitoring:
         atexit.register(self.event_harvester.stop)
 
     # custom events can be queried by using the following NRQL query template "SELECT * FROM MyTable" i.e., where MyTable==table_name
-    def _record_event(self, events, table: str):
+    def _record_events(self, events, table: str):
         for event in events:
             event["eventType"] = table
             self.event_batch.record(event)
 
-    def _record_metric(self, metrics):
+    def _record_metrics(self, metrics):
         for metric in metrics:
             self.metric_batch.record_gauge(metric["name"],metric.value, metric.tags)
 
@@ -374,7 +374,7 @@ class MLPerformanceMonitoring:
             timestamp=timestamp,
         )
         try:
-            self._record_event(events, EventName)
+            self._record_events(events, EventName)
         except Exception as e:
             self._log(str(e))
 
@@ -410,7 +410,7 @@ class MLPerformanceMonitoring:
                 else GaugeMetric(metric, value, metadata)
             )
         try:
-            self._record_metric(metrics_batch)
+            self._record_metrics(metrics_batch)
         except Exception as e:
             self._log(str(e))
         if successfully_message:
