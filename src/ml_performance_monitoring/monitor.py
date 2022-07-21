@@ -51,6 +51,7 @@ EventName = "InferenceData"
 
 
 class MLPerformanceMonitoring:
+
     # this class uses the telemetry SDK to record metrics to new relic, please see https://github.com/newrelic/newrelic-telemetry-sdk-python
     def __init__(
         self,
@@ -185,7 +186,7 @@ class MLPerformanceMonitoring:
 
     def _record_metrics(self, metrics):
         for metric in metrics:
-            self.metric_batch.record_gauge(metric["name"],metric.value, metric.tags)
+            self.metric_batch.record_gauge(metric["name"], metric.value, metric.tags)
 
     def set_model(self, model):
         self.model = model
