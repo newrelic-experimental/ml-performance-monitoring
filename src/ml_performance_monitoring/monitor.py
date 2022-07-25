@@ -51,6 +51,7 @@ EventName = "InferenceData"
 
 
 class MLPerformanceMonitoring:
+
     # this class uses the telemetry SDK to record metrics to new relic, please see https://github.com/newrelic/newrelic-telemetry-sdk-python
     def __init__(
         self,
@@ -178,9 +179,14 @@ class MLPerformanceMonitoring:
         atexit.register(self.event_harvester.stop)
 
     # custom events can be queried by using the following NRQL query template "SELECT * FROM MyTable" i.e., where MyTable==table_name
-    def _record_event(self, event: Dict[str, Any], table: str):
-        event["eventType"] = table
-        self.event_batch.record(event)
+    def _record_events(self, events, table: str):
+        for event in events:
+            event["eventType"] = table
+            self.event_batch.record(event)
+
+    def _record_metrics(self, metrics):
+        for metric in metrics:
+            self.metric_batch.record_gauge(metric["name"], metric.value, metric.tags)
 
     def set_model(self, model):
         self.model = model
@@ -369,7 +375,7 @@ class MLPerformanceMonitoring:
             timestamp=timestamp,
         )
         try:
-            self.event_client.send_batch(events)
+            self._record_events(events, EventName)
         except Exception as e:
             self._log(str(e))
 
@@ -395,6 +401,8 @@ class MLPerformanceMonitoring:
         )
         if feature_name is not None:
             metadata.update({"feature_name": feature_name})
+        if self.model_version is not None:
+            metadata.update({"model_version": self.model_version})
         metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
             metrics_batch.append(
@@ -403,7 +411,7 @@ class MLPerformanceMonitoring:
                 else GaugeMetric(metric, value, metadata)
             )
         try:
-            self.metric_client.send_batch(metrics_batch)
+            self._record_metrics(metrics_batch)
         except Exception as e:
             self._log(str(e))
         if successfully_message:
