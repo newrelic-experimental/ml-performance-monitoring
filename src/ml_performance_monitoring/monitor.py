@@ -18,7 +18,13 @@ from newrelic_telemetry_sdk import (
     MetricClient,
 )
 from newrelic_telemetry_sdk.event import Event
-import newrelic.agent
+import sys
+
+if "newrelic" in sys.modules:
+    import newrelic.agent
+    agent_loaded = True
+else:
+    agent_loaded = False
 
 logger = logging.getLogger("ml_performance_monitoring")
 
@@ -183,8 +189,9 @@ class MLPerformanceMonitoring:
     def _record_events(self, events, table: str):
         for event in events:
             event["eventType"] = table
-            if newrelic.agent.current_transaction() is not None:
-                event["transactionId"] = newrelic.agent.current_transaction()._transaction_id  # TODO(Danil) Do we need this? Prob not..
+
+            # Make sure that the agent is loaded before trying to use it
+            if agent_loaded and newrelic.agent.current_transaction() is not None:
                 event["traceId"] = newrelic.agent.trace_id
                 event["spanId"] = newrelic.agent.span_id
             self.event_batch.record(event)
