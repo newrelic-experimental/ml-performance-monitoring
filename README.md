@@ -58,7 +58,7 @@ Set your environment variable as: NEW_RELIC_INSERT_KEY
 (this can be license-key or insights-insert-key.)
 [Click here to learn how to get your insert key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#insights-insert-key).
 
-Are you using an EU New Relic accout? click [here](#eu-account-users) for more instructions.
+Are you reporting data to the New Relic EU region? click [here](#eu-account-users) for more instructions.
 
 #### STEP 2: Import package
 ```python
