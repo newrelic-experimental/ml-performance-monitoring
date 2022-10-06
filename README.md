@@ -56,9 +56,8 @@ ml_monitor.record_inference_data(X, y)
 ## Usage
 
 #### STEP 1: Set Your Environment Variable 
-Set your environment variable as: NEW_RELIC_INSERT_KEY
-(this can be license-key or insights-insert-key.)
-[Click here to learn how to get your insert key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#insights-insert-key).
+[Get your License key](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher) (also referenced as `ingest - license`) and set it as environment variable: `NEW_RELIC_INSERT_KEY`.
+[Click here](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key) for more details and instructions.
 
 Are you reporting data to the New Relic EU region? click [here](#eu-account-users) for more instructions.
 
