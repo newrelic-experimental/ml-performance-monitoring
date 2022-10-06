@@ -71,10 +71,6 @@ class MLPerformanceMonitoring:
         use_logger: Optional[bool] = None,
     ):
 
-        if not model:
-            warnings.warn(
-                "model wasn't defined, please use 'record_inference_data' to send data"
-            )
         if not isinstance(model_name, str) or not model_name:
             raise TypeError("model_name instance type must be str and not empty")
         if not isinstance(model_version, str) or not model_version:
