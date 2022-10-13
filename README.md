@@ -82,6 +82,7 @@ ml_monitor = MLPerformanceMonitoring(
     features_columns=features_columns,
     labels_columns=labels_columns,
     label_type="numeric",
+    model_version=model_version
 )
 ```
 
