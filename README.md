@@ -7,7 +7,20 @@
 </a>
 
 # ML Performance Monitoring
-ml-performance-monitoring provides a Python library for sending machine learning models' inference data and performance metrics into New Relic. By using this package, you can easily and quickly monitor your model, directly from a Jupyter notebook or a cloud service. The package is ML framework agnostic and can be quickly integrated. It is based on the [newrelic-telemetry-sdk-python](https://github.com/newrelic/newrelic-telemetry-sdk-python) library. 
+New Relic's MLOps solution provides a Python library that makes it easy to monitor your ML models.
+
+The key features:
+ - Easy to integrate
+ - ML framework agnostic
+ - Full compatibility with New Relic observability framework
+	 - Based on the [newrelic-telemetry-sdk-python](https://github.com/newrelic/newrelic-telemetry-sdk-python) library
+ - Monitoring and alerting:
+	 - Predictions
+	 - Features
+	 - Missing values
+	 - Custom model and data drift
+	 - Custom inference data 
+	 - Custom performance metrics
 
 ## Getting Started
 - [Documentation](https://docs.newrelic.com/docs/mlops/bring-your-own/mlops-byo/) - Overview of the New Relic MLOps docs and related resources.
@@ -24,19 +37,7 @@ ml-performance-monitoring provides a Python library for sending machine learning
 TODO - add a gif example of our machine learning model dashboard in NR
 --->
 
-## Installation
-**With `pip`**
-
-```bash
-pip install git+https://github.com/newrelic-experimental/ml-performance-monitoring.git
-```
-<!---**With `conda`**
-
-```sh
-TODO - add conda installation code
-```--->
-
-## Quickstart
+### Quickstart
 
  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_Boston_housing_prices_dataset.ipynb) easily try an end-to-end example of model monitoring.
 
@@ -52,6 +53,18 @@ y = my_model.predict(X)
 # STEP 3: Record your data
 ml_monitor.record_inference_data(X, y)
 ```
+
+## Installation
+**With `pip`**
+
+```bash
+pip install git+https://github.com/newrelic-experimental/ml-performance-monitoring.git
+```
+<!---**With `conda`**
+
+```sh
+TODO - add conda installation code
+```--->
 
 ## Usage
 
