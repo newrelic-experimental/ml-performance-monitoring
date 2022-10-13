@@ -77,7 +77,7 @@ features_columns, labels_columns = (
 
 ml_monitor = MLPerformanceMonitoring(
     insert_key=None,  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
-    model_name="my stunning model",
+    model_name="My stunning model",
     metadata=metadata,
     features_columns=features_columns,
     labels_columns=labels_columns,
