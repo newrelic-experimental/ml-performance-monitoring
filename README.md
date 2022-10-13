@@ -68,13 +68,14 @@ from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 
 #### STEP 3: Create model monitor
 ```python
-metadata = {"version": "1.0"}
+metadata = {"environment": "notebook"}
+model_version = "1.0"
 features_columns, labels_columns = (
     ["feture_1", "feture_2", "feture_3", "feture_4"],
     ["target"],
 )
 
-ml_monitor_ = MLPerformanceMonitoring(
+ml_monitor = MLPerformanceMonitoring(
     insert_key=None,  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
     model_name="my stunning model",
     metadata=metadata,
