@@ -379,7 +379,7 @@ class MLPerformanceMonitoring:
 
     def record_metrics(
         self,
-        metrics: Dict[str, Any],
+        metrics: Dict[str, float],
         timestamp: int = None,
         metadata: Optional[Dict[str, Any]] = None,
         data_metric: bool = False,
@@ -401,6 +401,8 @@ class MLPerformanceMonitoring:
             metadata.update({"model_version": self.model_version})
         metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
+            if not isinstance(value, float):
+                raise TypeError(f"metric value instance type must be int or float and not:{type(value)}")
             metrics_batch.append(
                 GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
                 if timestamp
