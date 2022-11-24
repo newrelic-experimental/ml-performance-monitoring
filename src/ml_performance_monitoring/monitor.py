@@ -400,7 +400,8 @@ class MLPerformanceMonitoring:
         metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
             if not isinstance(value, (int, float)):
-                raise TypeError(f"metric value instance type must be int or float and not:{type(value)}")
+                self._log(f"Sending failed for metric {metric}: value instance type must be int or float and not {type(value)}")
+                continue
             metrics_batch.append(
                 GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
                 if timestamp
