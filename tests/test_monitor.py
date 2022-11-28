@@ -243,15 +243,15 @@ def test_uuid_as_inference_id():
     )
     assert len(x_df["inference_id"].unique()) == 4
 
-def test_metric_value():
+def test_metric_value(capsys):
     prep_events_mock = mock.Mock()
     monitor.prepare_events = prep_events_mock
     metrics = {
         "Accuracy": 0.9812,
         "Recall": "sadasd",
     }
-    with pytest.raises(Exception) as value_type:
-        monitor.record_metrics(metrics=metrics)
-
-    assert value_type.value.args[0] == "metric value instance type must be int or float and not:<class 'str'>"
+    monitor.record_metrics(metrics=metrics)
+    captured = capsys.readouterr()
+    assert captured.out == ('Sending failed for metric Recall: value instance type must be int or float '
+ "and not <class 'str'>\n")
 
