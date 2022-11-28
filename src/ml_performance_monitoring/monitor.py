@@ -349,7 +349,6 @@ class MLPerformanceMonitoring:
                         metrics=metrics,
                         metadata=metadata,
                         data_metric=True,
-                        successfully_message=False,
                     )
                 self._log("data_metric sent successfully")
 
@@ -379,12 +378,11 @@ class MLPerformanceMonitoring:
 
     def record_metrics(
         self,
-        metrics: Dict[str, Any],
+        metrics: Dict[str, float],
         timestamp: int = None,
         metadata: Optional[Dict[str, Any]] = None,
         data_metric: bool = False,
         feature_name: Optional[str] = None,
-        successfully_message: bool = True,
     ):
         """This method send metrics to the table "Metric" in New Relic NRDB"""
         metric_type = "data_metric" if data_metric else "model_metric"
@@ -401,6 +399,9 @@ class MLPerformanceMonitoring:
             metadata.update({"model_version": self.model_version})
         metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
+            if not isinstance(value, (int, float)):
+                self._log(f"Sending failed for metric {metric}: value instance type must be int or float and not {type(value)}")
+                continue
             metrics_batch.append(
                 GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
                 if timestamp
@@ -410,8 +411,6 @@ class MLPerformanceMonitoring:
             self._record_metrics(metrics_batch)
         except Exception as e:
             self._log(str(e))
-        if successfully_message:
-            self._log(f"{metric_type} sent successfully")
 
     def predict(self, X: Union[pd.DataFrame, np.ndarray], **kwargs):
         """This method call the model 'predict' method and also call 'record_inference_data' method to send  inference data to the table "InferenceData" in New Relic NRDB"""
