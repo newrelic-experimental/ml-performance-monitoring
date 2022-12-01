@@ -106,7 +106,7 @@ y = my_model.predict(X)
 
 #### STEP 5: Record
 ```python
-ml_performence_monitor_model.record_inference_data(X, y)
+ml_monitor.record_inference_data(X, y)
 ```
 
 #### STEP 6: Monitor and alert
