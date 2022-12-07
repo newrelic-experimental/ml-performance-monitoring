@@ -84,7 +84,7 @@ from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 metadata = {"environment": "notebook"}
 model_version = "1.0"
 features_columns, labels_columns = (
-    ["feture_1", "feture_2", "feture_3", "feture_4"],
+    ["feature_1", "feature_2", "feature_3", "feature_4"],
     ["target"],
 )
 
