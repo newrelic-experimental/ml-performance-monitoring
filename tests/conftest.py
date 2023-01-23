@@ -19,6 +19,6 @@ def record_event_monkeypatch(monkeypatch):
         return None
 
     monkeypatch.setattr(
-        "ml_performance_monitoring.monitor.MLPerformanceMonitoring._record_event",
+        "ml_performance_monitoring.monitor.MLPerformanceMonitoring._record_events",
         record_event_monkeypatch_inner,
     )
