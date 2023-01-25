@@ -27,7 +27,7 @@ The key features:
 - [Additional Guides](https://github.com/newrelic/newrelic-telemetry-sdk-python) - Learn about New Relic's Telemetry Software Development Kit.
 
 ### Example Notebooks
-- [Try out](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_Boston_housing_prices_dataset.ipynb) an XGBoost model on [Boston housing prices](https://scikit-learn.org/0.15/modules/generated/sklearn.datasets.load_boston.html) dataset. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_Boston_housing_prices_dataset.ipynb)
+- [Try out](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_California_housing_prices_dataset.ipynb) an XGBoost model on [California housing prices](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html) dataset. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_California_housing_prices_dataset.ipynb)
 - [Try out](https://github.com/newrelic-experimental/ml-performance-monitoring/blob/main/examples/sklearn.RandomForestClassifier_on_Iris_dataset.ipynb) how to simulate 24 hours of model inference data using New Relic MLOps.  [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/sklearn.RandomForestClassifier_on_Iris_dataset.ipynb)
 
 <!--- - TODO - add demo video [Demo: Intro to New Relic MLOps Demo Video](https://...) - Learn by doing! In under 15 minutes, you'll see how you can get your models in observability--->
@@ -39,7 +39,7 @@ TODO - add a gif example of our machine learning model dashboard in NR
 
 ### Quickstart
 
- [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_Boston_housing_prices_dataset.ipynb) easily try an end-to-end example of model monitoring.
+ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/newrelic-experimental/ml-performance-monitoring/blob/main/examples/XGBoost_on_California_housing_prices_dataset.ipynb) easily try an end-to-end example of model monitoring.
 
 
 ```python
