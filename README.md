@@ -84,7 +84,7 @@ from ml_performance_monitoring.monitor import MLPerformanceMonitoring
 metadata = {"environment": "notebook"}
 model_version = "1.0"
 features_columns, labels_columns = (
-    ["feture_1", "feture_2", "feture_3", "feture_4"],
+    ["feature_1", "feature_2", "feature_3", "feature_4"],
     ["target"],
 )
 
@@ -106,7 +106,7 @@ y = my_model.predict(X)
 
 #### STEP 5: Record
 ```python
-ml_performence_monitor_model.record_inference_data(X, y)
+ml_monitor.record_inference_data(X, y)
 ```
 
 #### STEP 6: Monitor and alert
@@ -114,7 +114,7 @@ Done! Check your application in the [New Relic UI](https://one.newrelic.com/nr1-
 
 
 ### EU Account Users
-If you are using an EU account, send it as a parameter at the MLPerformanceMonitoring call if your environment variable is not set:
+If you are using an EU account, set your environment variables as following:
 * ``EVENT_CLIENT_HOST`` and ``METRIC_CLIENT_HOST``
   * US region account (default)-
     * ``EVENT_CLIENT_HOST``: insights-collector.newrelic.com
@@ -123,7 +123,7 @@ If you are using an EU account, send it as a parameter at the MLPerformanceMonit
     * ``EVENT_CLIENT_HOST``: insights-collector.eu01.nr-data.net
     * ``METRIC_CLIENT_HOST``: metric-api.eu.newrelic.com/metric/v1
     
-It can also be sent as parameters at the MLPerformanceMonitoring call.
+They can also be sent as parameters at the MLPerformanceMonitoring call.
 
 ## FAQ
 ### Support

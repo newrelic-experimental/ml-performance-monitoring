@@ -54,7 +54,7 @@ def test_init_model_name():
         )
     assert (
         model_name_missing.value.args[0]
-        == "__init__() missing 1 required positional argument: 'model_name'"
+        == "MLPerformanceMonitoring.__init__() missing 1 required positional argument: 'model_name'"
     )
 
     with pytest.raises(Exception) as model_name_type:
@@ -94,7 +94,8 @@ def test_init_model_version():
         )
     assert (
         model_version_missing.value.args[0]
-        == "__init__() missing 1 required positional argument: 'model_version'"
+        == ('MLPerformanceMonitoring.__init__() missing 1 required positional argument: '
+ "'model_version'")
     )
 
     with pytest.raises(Exception) as model_version_type:
@@ -156,7 +157,8 @@ def test_record_inference_data_x_y_missing():
         monitor.record_inference_data()
     assert (
         missing_X_y.value.args[0]
-        == "record_inference_data() missing 2 required positional arguments: 'X' and 'y'"
+        == ('MLPerformanceMonitoring.record_inference_data() missing 2 required '
+ "positional arguments: 'X' and 'y'")
     )
 
     with pytest.raises(Exception) as missing_y:
@@ -165,14 +167,16 @@ def test_record_inference_data_x_y_missing():
         )
     assert (
         missing_y.value.args[0]
-        == "record_inference_data() missing 1 required positional argument: 'y'"
+        == ('MLPerformanceMonitoring.record_inference_data() missing 1 required '
+ "positional argument: 'y'")
     )
 
     with pytest.raises(Exception) as missing_X:
         monitor.record_inference_data(y=[11, 12, 5, 2, 4])
     assert (
         missing_X.value.args[0]
-        == "record_inference_data() missing 1 required positional argument: 'X'"
+        == ('MLPerformanceMonitoring.record_inference_data() missing 1 required '
+ "positional argument: 'X'")
     )
 
 
@@ -238,3 +242,16 @@ def test_uuid_as_inference_id():
         == y_df["inference_id"].astype("str").iloc[0]
     )
     assert len(x_df["inference_id"].unique()) == 4
+
+def test_metric_value(capsys):
+    prep_events_mock = mock.Mock()
+    monitor.prepare_events = prep_events_mock
+    metrics = {
+        "Accuracy": 0.9812,
+        "Recall": "sadasd",
+    }
+    monitor.record_metrics(metrics=metrics)
+    captured = capsys.readouterr()
+    assert captured.out == ('Sending failed for metric Recall: value instance type must be int or float '
+ "and not <class 'str'>\n")
+
