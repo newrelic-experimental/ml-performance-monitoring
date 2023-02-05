@@ -5,7 +5,7 @@ description = "ml-performance-monitoring provides a Python library for sending m
 authors = ["AIR <applied-intelligence-research-team@newrelic.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.11"
+python = ">=3.8,<3.11"
 newrelic-telemetry-sdk = "^0.4.2"
 numpy = '*'
 
@@ -13,6 +13,9 @@ numpy = '*'
 pytest = "^6.2.1"
 tox = "^3.20.1"
 tox-pyenv = "^1.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pandas = "^1.5.3"
 
 [tool.nbqa.addopts]
 isort = ["--profile=black"]
