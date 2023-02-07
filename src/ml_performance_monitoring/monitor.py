@@ -9,8 +9,14 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from newrelic_telemetry_sdk import (EventBatch, EventClient, GaugeMetric,
-                                    Harvester, MetricBatch, MetricClient)
+from newrelic_telemetry_sdk import (
+    EventBatch,
+    EventClient,
+    GaugeMetric,
+    Harvester,
+    MetricBatch,
+    MetricClient,
+)
 from newrelic_telemetry_sdk.event import Event
 
 logger = logging.getLogger("ml_performance_monitoring")
@@ -251,11 +257,7 @@ class MLPerformanceMonitoring:
 
         request_id = self.get_request_id()
         for t in flat.itertuples(index=False, name=None):
-            curr_inference_metadata = (
-                inference_id_to_inference_metadata[t[0]]
-                if inference_id_to_inference_metadata is not None
-                else {}
-            )
+            curr_inference_metadata = inference_id_to_inference_metadata[t[0]] or {}
             events.append(
                 self.tuple_to_event(
                     t,
@@ -285,7 +287,7 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
-        inference_metadata: List[Dict[str, str]] = {},
+        inference_metadata: List[Dict[str, str]] = [],
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
