@@ -121,7 +121,7 @@ class MLPerformanceMonitoring:
         if (
             not isinstance(self.insert_key, str) and self.insert_key is not None
         ) or self.insert_key is None:
-            raise TypeError("insert_key instance type must be str and not None")
+            raise TypeError("insert_key instance type must str and not None")
         self._start()
 
     def _log(self, msg: str):
@@ -249,7 +249,6 @@ class MLPerformanceMonitoring:
         flat: pd.DataFrame,
         y: pd.DataFrame,
         metadata: Dict[str, Any],
-        inference_id_to_inference_metadata: Dict[str, Dict[str, str]],
         timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Sequence[Event]:
@@ -257,13 +256,12 @@ class MLPerformanceMonitoring:
 
         request_id = self.get_request_id()
         for t in flat.itertuples(index=False, name=None):
-            curr_inference_metadata = inference_id_to_inference_metadata[t[0]] or {}
             events.append(
                 self.tuple_to_event(
                     t,
                     flat.columns.to_list(),
                     request_id,
-                    metadata | curr_inference_metadata,
+                    metadata,
                     timestamp,
                 )
             )
@@ -287,21 +285,10 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
-        inference_metadata: List[Dict[str, str]] = [],
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
-        """Send inference data to the New Relic Database.
-        Tha data could be viewed on the "Model performence" page and in the table "InferenceData" in New Relic NRDB
-
-
-        Args:
-            X (Union[pd.DataFrame, np.ndarray]): A list of features
-            y (Union[pd.DataFrame, np.ndarray]): A list of the resulting labels
-            inference_metadata (List[Dict[str, str]], optional): Additional data about the each inference, the
-                data will be added to each inference in the NRDB. Each Item in the list is a Dict of key-value items, describing
-                A single inference. Defaults to None.
-        """
+        """This method send inference data to the table "InferenceData" in New Relic NRDB"""
         self.static_metadata.update(
             {
                 "modelName": self.model_name,
@@ -314,10 +301,6 @@ class MLPerformanceMonitoring:
             raise TypeError("y instance type must be pd.DataFrame or np.ndarray")
         if len(X) != len(y):
             raise ValueError("X and y must have the same length")
-        elif len(inference_metadata) > 0 and len(inference_metadata) != len(X):
-            raise ValueError(
-                "inference_metadata must have the same length as X and y or have a length of 0"
-            )
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(
                 list(map(np.ravel, X)),
@@ -336,9 +319,6 @@ class MLPerformanceMonitoring:
         infid_to_uuid = {
             infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()
         }
-        inference_id_to_inference_metadata = dict(
-            zip(infid_to_uuid.values(), inference_metadata)
-        )
         X_df["inference_id"] = X_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
 
@@ -387,7 +367,6 @@ class MLPerformanceMonitoring:
             X_df,
             y_df,
             metadata=self.static_metadata,
-            inference_id_to_inference_metadata=inference_id_to_inference_metadata,
             timestamp=timestamp,
         )
         try:
@@ -421,9 +400,7 @@ class MLPerformanceMonitoring:
         metrics_batch: List[GaugeMetric] = []
         for metric, value in metrics.items():
             if not isinstance(value, (int, float)):
-                self._log(
-                    f"Sending failed for metric {metric}: value instance type must be int or float and not {type(value)}"
-                )
+                self._log(f"Sending failed for metric {metric}: value instance type must be int or float and not {type(value)}")
                 continue
             metrics_batch.append(
                 GaugeMetric(metric, value, metadata, end_time_ms=timestamp)
