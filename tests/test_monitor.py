@@ -16,7 +16,8 @@ monitor = MLPerformanceMonitoring(
     metadata=metadata,
     label_type="categorical",
 )
-monitor._record_events = mock.Mock()
+
+monitor._record_events = mock.Mock()  # type: ignore
 
 
 def setup_function(function):
@@ -230,11 +231,17 @@ def test_record_inference_data_x_y_inference_metadata_same_length():
     )
 
 
+def test_record_inference_data_missing_inference_metadata():
+    monitor.record_inference_data(
+        X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
+        y=np.array([11, 12, 5, 2]),
+    )
+
+    events = monitor._record_events.call_args[0][0]
+    assert len(events) == 20
+
+
 def test_record_inference_data():
-
-    record_events = monitor._record_events
-
-    monitor._record_events = mock.Mock()
 
     monitor.record_inference_data(
         X=np.array(
@@ -270,8 +277,6 @@ def test_record_inference_data():
         == 4
     )
     assert len(events) == 20
-
-    monitor._record_events = record_events
 
 
 def is_valid_uuid(val):
