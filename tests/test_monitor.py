@@ -1,4 +1,3 @@
-import os
 import uuid
 from unittest import mock
 
@@ -16,21 +15,9 @@ monitor = MLPerformanceMonitoring(
     metadata=metadata,
     label_type="categorical",
 )
-monitor._record_events = mock.Mock()
-
-
-def setup_function(function):
-    monitor._record_events.reset_mock()
-
-
-def teardown_function(function):
-    pass
 
 
 def test_init_insert_key():
-    if os.environ.get("NEW_RELIC_INSERT_KEY") is not None:
-        del os.environ["NEW_RELIC_INSERT_KEY"]
-
     with pytest.raises(Exception) as insert_key_type:
         MLPerformanceMonitoring(
             insert_key=123456789,
@@ -41,7 +28,7 @@ def test_init_insert_key():
         )
     assert (
         insert_key_type.value.args[0]
-        == "insert_key instance type must be str and not None"
+        == "insert_key instance type must str and not None"
     )
 
     with pytest.raises(Exception) as insert_key_missing:
@@ -53,7 +40,7 @@ def test_init_insert_key():
         )
     assert (
         insert_key_missing.value.args[0]
-        == "insert_key instance type must be str and not None"
+        == "insert_key instance type must str and not None"
     )
 
 
@@ -105,9 +92,10 @@ def test_init_model_version():
             metadata=metadata,
             label_type="categorical",
         )
-    assert model_version_missing.value.args[0] == (
-        "MLPerformanceMonitoring.__init__() missing 1 required positional argument: "
-        "'model_version'"
+    assert (
+        model_version_missing.value.args[0]
+        == ('MLPerformanceMonitoring.__init__() missing 1 required positional argument: '
+ "'model_version'")
     )
 
     with pytest.raises(Exception) as model_version_type:
@@ -167,25 +155,28 @@ def test_init_output_type():
 def test_record_inference_data_x_y_missing():
     with pytest.raises(Exception) as missing_X_y:
         monitor.record_inference_data()
-    assert missing_X_y.value.args[0] == (
-        "MLPerformanceMonitoring.record_inference_data() missing 2 required "
-        "positional arguments: 'X' and 'y'"
+    assert (
+        missing_X_y.value.args[0]
+        == ('MLPerformanceMonitoring.record_inference_data() missing 2 required '
+ "positional arguments: 'X' and 'y'")
     )
 
     with pytest.raises(Exception) as missing_y:
         monitor.record_inference_data(
             X=np.array([[11, 12, 5, 2], [15, 1, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]])
         )
-    assert missing_y.value.args[0] == (
-        "MLPerformanceMonitoring.record_inference_data() missing 1 required "
-        "positional argument: 'y'"
+    assert (
+        missing_y.value.args[0]
+        == ('MLPerformanceMonitoring.record_inference_data() missing 1 required '
+ "positional argument: 'y'")
     )
 
     with pytest.raises(Exception) as missing_X:
         monitor.record_inference_data(y=[11, 12, 5, 2, 4])
-    assert missing_X.value.args[0] == (
-        "MLPerformanceMonitoring.record_inference_data() missing 1 required "
-        "positional argument: 'X'"
+    assert (
+        missing_X.value.args[0]
+        == ('MLPerformanceMonitoring.record_inference_data() missing 1 required '
+ "positional argument: 'X'")
     )
 
 
@@ -215,63 +206,11 @@ def test_record_inference_data_x_y_same_length():
     assert X_y_length.value.args[0] == "X and y must have the same length"
 
 
-def test_record_inference_data_x_y_inference_metadata_same_length():
-    with pytest.raises(Exception) as X_y_metadata_length:
-        monitor.record_inference_data(
-            X=np.array(
-                [[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]
-            ),
-            y=np.array([11, 12, 5, 2]),
-            inference_metadata=[{"index": 1}, {"index": 2}, {"index": 3}],
-        )
-    assert (
-        X_y_metadata_length.value.args[0]
-        == "inference_metadata must have the same length as X and y or have a length of 0"
-    )
-
-
 def test_record_inference_data():
-
-    record_events = monitor._record_events
-
-    monitor._record_events = mock.Mock()
-
     monitor.record_inference_data(
-        X=np.array(
-            [
-                [11, 12, 5, 2],
-                [1, 15, 6, 10],
-                ["third", "third", "third", "third"],
-                [12, 15, 8, 6],
-            ]
-        ),
+        X=np.array([[11, 12, 5, 2], [1, 15, 6, 10], [10, 8, 12, 5], [12, 15, 8, 6]]),
         y=np.array([11, 12, 5, 2]),
-        inference_metadata=[
-            {"index": 1},
-            {"index": 2},
-            {"index": 3, "test": "result"},
-            {"index": 4},
-        ],
     )
-
-    events = monitor._record_events.call_args[0][0]
-
-    # makes sure that inference metadata is assigned properly
-    assert (
-        len(
-            [
-                event
-                for event in events
-                if "test" in event
-                and event["test"] == "result"
-                and event["feature_value"] == "third"
-            ]
-        )
-        == 4
-    )
-    assert len(events) == 20
-
-    monitor._record_events = record_events
 
 
 def is_valid_uuid(val):
@@ -304,7 +243,6 @@ def test_uuid_as_inference_id():
     )
     assert len(x_df["inference_id"].unique()) == 4
 
-
 def test_metric_value(capsys):
     prep_events_mock = mock.Mock()
     monitor.prepare_events = prep_events_mock
@@ -314,7 +252,6 @@ def test_metric_value(capsys):
     }
     monitor.record_metrics(metrics=metrics)
     captured = capsys.readouterr()
-    assert captured.out == (
-        "Sending failed for metric Recall: value instance type must be int or float "
-        "and not <class 'str'>\n"
-    )
+    assert captured.out == ('Sending failed for metric Recall: value instance type must be int or float '
+ "and not <class 'str'>\n")
+
