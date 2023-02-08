@@ -257,7 +257,11 @@ class MLPerformanceMonitoring:
 
         request_id = self.get_request_id()
         for t in flat.itertuples(index=False, name=None):
-            curr_inference_metadata = inference_id_to_inference_metadata[t[0]] or {}
+            curr_inference_metadata = (
+                inference_id_to_inference_metadata[t[0]]
+                if t[0] in inference_id_to_inference_metadata
+                else {}
+            )
             events.append(
                 self.tuple_to_event(
                     t,
