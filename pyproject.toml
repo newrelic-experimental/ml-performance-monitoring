@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "ml-performance-monitoring"
-version = "0.1.6"
+version = "0.1.7"
 description = "ml-performance-monitoring provides a Python library for sending model data & metrics to New Relic, directly from a Jupyter notebook or any other platform. This library is based of the “newrelic_telemetry_sdk” library."
 authors = ["AIR <applied-intelligence-research-team@newrelic.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.11"
+python = ">=3.8,<3.11"
 newrelic-telemetry-sdk = "^0.4.2"
 numpy = '*'
 
@@ -13,6 +13,9 @@ numpy = '*'
 pytest = "^6.2.1"
 tox = "^3.20.1"
 tox-pyenv = "^1.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pandas = "^1.5.3"
 
 [tool.nbqa.addopts]
 isort = ["--profile=black"]

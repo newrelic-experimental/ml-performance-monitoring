@@ -142,3 +142,6 @@ poetry.lock
 
 # vscode
 .vscode
+
+#pyenv
+.python-version
