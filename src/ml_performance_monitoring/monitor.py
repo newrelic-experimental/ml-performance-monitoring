@@ -267,7 +267,7 @@ class MLPerformanceMonitoring:
                     t,
                     flat.columns.to_list(),
                     request_id,
-                    metadata | curr_inference_metadata,
+                    {**metadata, **curr_inference_metadata},
                     timestamp,
                 )
             )
