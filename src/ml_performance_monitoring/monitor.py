@@ -104,7 +104,6 @@ class MLPerformanceMonitoring:
         self.static_metadata = metadata
         self.features_columns = features_columns
         self.labels_columns = labels_columns
-        # self.label_type = label_type
         self.use_logger = use_logger if use_logger is not None else False
 
     def _set_insert_key(
@@ -360,7 +359,6 @@ class MLPerformanceMonitoring:
         )
 
         y_df["label_type"] = y_df["label_name"].map(label_column_types)
-        # y_df["label_types"] = self.label_type
         y_df["inference_id"] = y_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
         inference_data = pd.concat([X, y], axis=1)
