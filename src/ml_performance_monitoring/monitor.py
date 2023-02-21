@@ -65,7 +65,6 @@ class MLPerformanceMonitoring:
         send_data_metrics=False,
         features_columns: Optional[List[str]] = None,
         labels_columns: Optional[List[str]] = None,
-        label_type: Optional[str] = None,
         event_client_host: Optional[str] = None,
         metric_client_host: Optional[str] = None,
         use_logger: Optional[bool] = None,
@@ -87,10 +86,6 @@ class MLPerformanceMonitoring:
             raise TypeError("event_client_host instance type must be str or None")
         if not isinstance(metric_client_host, str) and metric_client_host is not None:
             raise TypeError("metric_client_host instance type must be str or None")
-        if label_type not in LabelType:
-            raise TypeError(
-                f"label_type instance must be one of the values: {[e.value for e in LabelType]}"
-            )
 
         self.event_client_host = event_client_host or os.getenv(
             "EVENT_CLIENT_HOST", EventClient.HOST
@@ -109,7 +104,7 @@ class MLPerformanceMonitoring:
         self.static_metadata = metadata
         self.features_columns = features_columns
         self.labels_columns = labels_columns
-        self.label_type = label_type
+        # self.label_type = label_type
         self.use_logger = use_logger if use_logger is not None else False
 
     def _set_insert_key(
@@ -359,7 +354,13 @@ class MLPerformanceMonitoring:
             )
         y_df = y.stack().reset_index()
         y_df.columns = ["inference_id", "label_name", "label_value"]
-        y_df["label_type"] = self.label_type
+
+        label_column_types = self._calc_columns_types(
+            y.drop(columns=["index"], errors="ignore")
+        )
+
+        y_df["label_type"] = y_df["label_name"].map(label_column_types)
+        # y_df["label_types"] = self.label_type
         y_df["inference_id"] = y_df["inference_id"].apply(lambda x: infid_to_uuid[x])
         y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
         inference_data = pd.concat([X, y], axis=1)
@@ -483,7 +484,6 @@ def wrap_model(
     send_data_metrics=False,
     features_columns: Optional[List[str]] = None,
     labels_columns: Optional[List[str]] = None,
-    label_type: Optional[str] = None,
     event_client_host: Optional[str] = None,
     metric_client_host: Optional[str] = None,
 ) -> MLPerformanceMonitoring:
@@ -499,7 +499,6 @@ def wrap_model(
         send_data_metrics,
         features_columns,
         labels_columns,
-        label_type,
         event_client_host,
         metric_client_host,
     )
