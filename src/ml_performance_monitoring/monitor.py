@@ -65,6 +65,7 @@ class MLPerformanceMonitoring:
         send_data_metrics=False,
         features_columns: Optional[List[str]] = None,
         labels_columns: Optional[List[str]] = None,
+        label_type: Optional[str] = None,
         event_client_host: Optional[str] = None,
         metric_client_host: Optional[str] = None,
         use_logger: Optional[bool] = None,
@@ -86,6 +87,10 @@ class MLPerformanceMonitoring:
             raise TypeError("event_client_host instance type must be str or None")
         if not isinstance(metric_client_host, str) and metric_client_host is not None:
             raise TypeError("metric_client_host instance type must be str or None")
+        if label_type is not None:
+            warnings.warn(
+                'argument "label_type" is deprecated and is curently ignored, please remove this argument'
+            )
 
         self.event_client_host = event_client_host or os.getenv(
             "EVENT_CLIENT_HOST", EventClient.HOST

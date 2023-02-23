@@ -19,7 +19,7 @@ The key features:
 	 - Features
 	 - Missing values
 	 - Custom model and data drift
-	 - Custom inference data 
+	 - Custom inference data
 	 - Custom performance metrics
 
 ## Getting Started
@@ -68,7 +68,7 @@ TODO - add conda installation code
 
 ## Usage
 
-#### STEP 1: Set Your Environment Variable 
+#### STEP 1: Set Your Environment Variable
 [Get your License key](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher) (also referenced as `ingest - license`) and set it as environment variable: `NEW_RELIC_INSERT_KEY`.
 [Click here](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key) for more details and instructions.
 
@@ -94,7 +94,6 @@ ml_monitor = MLPerformanceMonitoring(
     metadata=metadata,
     features_columns=features_columns,
     labels_columns=labels_columns,
-    label_type="numeric",
     model_version=model_version
 )
 ```
@@ -122,7 +121,7 @@ If you are using an EU account, set your environment variables as following:
   * EU region account-
     * ``EVENT_CLIENT_HOST``: insights-collector.eu01.nr-data.net
     * ``METRIC_CLIENT_HOST``: metric-api.eu.newrelic.com/metric/v1
-    
+
 They can also be sent as parameters at the MLPerformanceMonitoring call.
 
 ## FAQ
@@ -140,5 +139,5 @@ If you believe you have found a security vulnerability in this project or any of
 ## License
 ml-performance-monitoring is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
 
-**If applicable:** 
+**If applicable:**
 The ml-performance-monitoring also uses source code from third-party libraries. You can find full details on which libraries are used and the terms under which they are licensed in the third-party notices document.
