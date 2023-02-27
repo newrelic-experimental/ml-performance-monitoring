@@ -3,6 +3,7 @@ import uuid
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from ml_performance_monitoring.monitor import MLPerformanceMonitoring
@@ -14,18 +15,17 @@ monitor = MLPerformanceMonitoring(
     model_name="Iris RandomForestClassifier",
     model_version="1.0.0",
     metadata=metadata,
-    label_type="categorical",
 )
 
 monitor._record_events = mock.Mock()  # type: ignore
 
 
 def setup_function(function):
-    monitor._record_events.reset_mock()
+    pass
 
 
 def teardown_function(function):
-    pass
+    monitor._record_events.reset_mock()
 
 
 def test_init_insert_key():
@@ -38,7 +38,6 @@ def test_init_insert_key():
             model_name="Iris RandomForestClassifier",
             model_version="1.0.0",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         insert_key_type.value.args[0]
@@ -50,7 +49,6 @@ def test_init_insert_key():
             model_name="Iris RandomForestClassifier",
             model_version="1.0.0",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         insert_key_missing.value.args[0]
@@ -64,7 +62,6 @@ def test_init_model_name():
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_version="1.0.0",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         model_name_missing.value.args[0]
@@ -77,7 +74,6 @@ def test_init_model_name():
             model_name=123456789,
             model_version="1.0.0",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         model_name_type.value.args[0]
@@ -90,7 +86,6 @@ def test_init_model_name():
             model_name="",
             model_version="1.0.0",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         model_name_type.value.args[0]
@@ -104,7 +99,6 @@ def test_init_model_version():
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
             metadata=metadata,
-            label_type="categorical",
         )
     assert model_version_missing.value.args[0] == (
         "MLPerformanceMonitoring.__init__() missing 1 required positional argument: "
@@ -117,7 +111,6 @@ def test_init_model_version():
             model_name="Iris RandomForestClassifier",
             model_version=123456789,
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         model_version_type.value.args[0]
@@ -130,7 +123,6 @@ def test_init_model_version():
             model_name="Iris RandomForestClassifier",
             model_version="",
             metadata=metadata,
-            label_type="categorical",
         )
     assert (
         model_version_type.value.args[0]
@@ -145,7 +137,6 @@ def test_init_metadata():
             model_name="Iris RandomForestClassifier",
             model_version="1.0.0",
             metadata=123456789,
-            label_type="categorical",
         )
     assert (
         metadata_type.value.args[0]
@@ -159,7 +150,6 @@ def test_init_output_type():
             insert_key="NRII-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
             model_name="Iris RandomForestClassifier",
             model_version="1.0.0",
-            label_type="categorical",
         ),
         MLPerformanceMonitoring,
     )
@@ -277,6 +267,57 @@ def test_record_inference_data():
         == 4
     )
     assert len(events) == 20
+
+
+def test_different_label_types():
+
+    labels = {
+        "num": [1, 2, 3, 4],
+        "text": ["one", "two", "three", "four"],
+        "isEven": [False, True, False, True],
+    }
+
+    monitor.record_inference_data(
+        X=np.array(
+            [
+                [11.1, 12, 5, 2],
+                [1, 15, 6, 10],
+                [4, 5, 1, 7],
+                [12, 15, 8, 6],
+            ]
+        ),
+        y=pd.DataFrame(data=labels),
+    )
+
+    events = monitor._record_events.call_args[0][0]
+
+    assert (
+        sum(
+            "label_name" in event
+            and event["label_name"] == "isEven"
+            and event["label_type"] == "bool"
+            for event in events
+        )
+        == 4
+    )
+    assert (
+        sum(
+            "label_name" in event
+            and event["label_name"] == "text"
+            and event["label_type"] == "categorical"
+            for event in events
+        )
+        == 4
+    )
+    assert (
+        sum(
+            "label_name" in event
+            and event["label_name"] == "num"
+            and event["label_type"] == "numeric"
+            for event in events
+        )
+        == 4
+    )
 
 
 def is_valid_uuid(val):
