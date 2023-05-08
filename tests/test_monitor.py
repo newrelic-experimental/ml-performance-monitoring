@@ -3,7 +3,6 @@ import uuid
 from unittest import mock
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from ml_performance_monitoring.monitor import MLPerformanceMonitoring
@@ -228,7 +227,7 @@ def test_record_inference_data_missing_inference_metadata():
     )
 
     events = monitor._record_events.call_args[0][0]
-    assert len(events) == 20
+    assert len(events) == 4
 
 
 def test_record_inference_data():
@@ -238,7 +237,7 @@ def test_record_inference_data():
             [
                 [11, 12, 5, 2],
                 [1, 15, 6, 10],
-                ["third", "third", "third", "third"],
+                ["third", "third", "third", 2.3],
                 [12, 15, 8, 6],
             ]
         ),
@@ -253,71 +252,22 @@ def test_record_inference_data():
 
     events = monitor._record_events.call_args[0][0]
 
+    assert len(events) == 4
+
     # makes sure that inference metadata is assigned properly
     assert (
-        len(
-            [
-                event
-                for event in events
-                if "test" in event
-                and event["test"] == "result"
-                and event["feature_value"] == "third"
-            ]
-        )
-        == 4
-    )
-    assert len(events) == 20
-
-
-def test_different_label_types():
-
-    labels = {
-        "num": [1, 2, 3, 4],
-        "text": ["one", "two", "three", "four"],
-        "isEven": [False, True, False, True],
-    }
-
-    monitor.record_inference_data(
-        X=np.array(
-            [
-                [11.1, 12, 5, 2],
-                [1, 15, 6, 10],
-                [4, 5, 1, 7],
-                [12, 15, 8, 6],
-            ]
-        ),
-        y=pd.DataFrame(data=labels),
+        events[0]["index"] == 1
+        and events[1]["index"] == 2
+        and events[2]["index"] == 3
+        and events[2]["test"] == "result"
+        and events[3]["index"] == 4
     )
 
-    events = monitor._record_events.call_args[0][0]
-
-    assert (
-        sum(
-            "label_name" in event
-            and event["label_name"] == "isEven"
-            and event["label_type"] == "bool"
-            for event in events
-        )
-        == 4
-    )
-    assert (
-        sum(
-            "label_name" in event
-            and event["label_name"] == "text"
-            and event["label_type"] == "categorical"
-            for event in events
-        )
-        == 4
-    )
-    assert (
-        sum(
-            "label_name" in event
-            and event["label_name"] == "num"
-            and event["label_type"] == "numeric"
-            for event in events
-        )
-        == 4
-    )
+    # make sure each label is assigned to the correct features
+    assert events[0]["feature.0"] == "11" and events[0]["label.0"] == 11
+    assert events[1]["feature.0"] == "1" and events[1]["label.0"] == 12
+    assert events[2]["feature.0"] == "third" and events[2]["label.0"] == 5
+    assert events[3]["feature.0"] == "12" and events[3]["label.0"] == 2
 
 
 def is_valid_uuid(val):
@@ -337,18 +287,10 @@ def test_uuid_as_inference_id():
         y=np.array([11, 12, 5, 2]),
     )
 
-    x_df, y_df = (
-        prep_events_mock.mock_calls[0][1][0],
-        prep_events_mock.mock_calls[0][1][1],
-    )
+    inference_data = prep_events_mock.mock_calls[0][1][0]
 
-    assert is_valid_uuid(x_df["inference_id"].astype("str").iloc[0])
-    assert is_valid_uuid(y_df["inference_id"].astype("str").iloc[0])
-    assert (
-        x_df["inference_id"].astype("str").iloc[0]
-        == y_df["inference_id"].astype("str").iloc[0]
-    )
-    assert len(x_df["inference_id"].unique()) == 4
+    assert is_valid_uuid(inference_data["inference_id"].astype("str").iloc[0])
+    assert len(inference_data["inference_id"].unique()) == 4
 
 
 def test_metric_value(capsys):
