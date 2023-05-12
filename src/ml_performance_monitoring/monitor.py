@@ -251,24 +251,23 @@ class MLPerformanceMonitoring:
         self,
         inference_data: pd.DataFrame,
         metadata: Dict[str, Any],
-        inference_metadata: List[Dict[str, str]] = [],
+        inference_metadata: Optional[List[Dict[str, str]]] = None,
         timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Sequence[Event]:
         events: List[Event] = []
 
+        columns = inference_data.columns.to_list()
+
         request_id = self.get_request_id()
-        for index, t in zip(
-            range(len(inference_data)),
-            inference_data.itertuples(index=False, name=None),
-        ):
+        for index, t in enumerate(inference_data.itertuples(index=False, name=None)):
             curr_inference_metadata = (
-                inference_metadata[index] if index < len(inference_metadata) else {}
+                inference_metadata[index] if inference_metadata else {}
             )
             events.append(
                 self.tuple_to_event(
                     t,
-                    inference_data.columns.to_list(),
+                    columns,
                     request_id,
                     {**metadata, **curr_inference_metadata},
                     timestamp,
@@ -282,7 +281,7 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
-        inference_metadata: List[Dict[str, str]] = [],
+        inference_metadata: Optional[List[Dict[str, str]]] = None,
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
@@ -309,7 +308,7 @@ class MLPerformanceMonitoring:
             raise TypeError("y instance type must be pd.DataFrame or np.ndarray")
         if len(X) != len(y):
             raise ValueError("X and y must have the same length")
-        elif len(inference_metadata) > 0 and len(inference_metadata) != len(X):
+        elif inference_metadata and len(inference_metadata) != len(X):
             raise ValueError(
                 "inference_metadata must have the same length as X and y or have a length of 0"
             )
@@ -321,9 +320,7 @@ class MLPerformanceMonitoring:
                 else [str(int) for int in range(len(X[0]))],
             )
 
-        X_copy = X.rename(
-            columns=lambda column_name: f"{FeatureNamePrefix}{column_name}"
-        )
+        X_copy = X.add_prefix(FeatureNamePrefix)
         now = datetime.datetime.now()
 
         uuid_list = [
@@ -345,7 +342,7 @@ class MLPerformanceMonitoring:
                 columns=[str(sub) for sub in labels_columns],
             )
 
-        y_copy = y.rename(columns=lambda column_name: f"{LabelNamePrefix}{column_name}")
+        y_copy = y.add_prefix(LabelNamePrefix)
 
         inference_data = pd.concat([X_copy, y_copy], axis=1)
         if self.send_data_metrics:
