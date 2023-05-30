@@ -369,6 +369,8 @@ class MLPerformanceMonitoring:
             return
         inference_data.reset_index(level=0, inplace=True)
 
+        inference_data["new_relic_data_schema_version"] = 2
+
         events = self.prepare_events(
             inference_data.drop(columns=["index"], errors="ignore"),
             metadata=self.static_metadata,
