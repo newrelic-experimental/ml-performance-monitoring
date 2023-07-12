@@ -32,6 +32,9 @@ def test_init_insert_key():
     if os.environ.get("NEW_RELIC_INSERT_KEY") is not None:
         del os.environ["NEW_RELIC_INSERT_KEY"]
 
+    if os.environ.get("NEW_RELIC_LICENSE_KEY") is not None:
+        del os.environ["NEW_RELIC_LICENSE_KEY"]
+
     with pytest.raises(Exception) as insert_key_type:
         MLPerformanceMonitoring(
             insert_key=123456789,
