@@ -69,7 +69,7 @@ TODO - add conda installation code
 ## Usage
 
 #### STEP 1: Set Your Environment Variable
-[Get your License key](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher) (also referenced as `ingest - license`) and set it as environment variable: `NEW_RELIC_INSERT_KEY`.
+[Get your License key](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher) (also referenced as `ingest - license`) and set it as environment variable: `NEW_RELIC_LICENSE_KEY`.
 [Click here](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key) for more details and instructions.
 
 Are you reporting data to the New Relic EU region? click [here](#eu-account-users) for more instructions.
@@ -89,7 +89,7 @@ features_columns, labels_columns = (
 )
 
 ml_monitor = MLPerformanceMonitoring(
-    insert_key=None,  # set the environment variable NEW_RELIC_INSERT_KEY or send your insert key here
+    insert_key=None,  # set the environment variable NEW_RELIC_LICENSE_KEY or send your insert key here
     model_name="My stunning model",
     metadata=metadata,
     features_columns=features_columns,
