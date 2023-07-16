@@ -115,7 +115,7 @@ class MLPerformanceMonitoring:
         self,
         insert_key: Optional[str] = None,
     ):
-        self.insert_key = insert_key or os.getenv("NEW_RELIC_INSERT_KEY")  # type: ignore
+        self.insert_key = insert_key or os.getenv("NEW_RELIC_LICENSE_KEY") or os.getenv("NEW_RELIC_INSERT_KEY")  # type: ignore
 
         if (
             not isinstance(self.insert_key, str) and self.insert_key is not None
@@ -132,7 +132,7 @@ class MLPerformanceMonitoring:
     # initialize event thread
     def _start(self):
 
-        # the API requires the new relic insert key https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#insights-insert-key
+        # the API requires the new relic license-key https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key
 
         # define a Metric client & batch for sending gauge metrics, you usually want to do this high volume inference in production. Metrics are historically aggregated in NRDB.
         # for metric data types please see https://docs.newrelic.com/docs/telemetry-data-platform/understand-data/metric-data/metric-data-type/
