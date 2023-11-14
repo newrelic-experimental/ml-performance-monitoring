@@ -48,6 +48,8 @@ FEATURE_TYPE = {
 }
 
 EventName = "InferenceData"
+FeatureNamePrefix = "feature."
+LabelNamePrefix = "label."
 
 
 class MLPerformanceMonitoring:
@@ -71,6 +73,8 @@ class MLPerformanceMonitoring:
         use_logger: Optional[bool] = None,
     ):
 
+        self.monitor_uuid = uuid.uuid4()
+
         if not isinstance(model_name, str) or not model_name:
             raise TypeError("model_name instance type must be str and not empty")
         if not isinstance(model_version, str) or not model_version:
@@ -89,7 +93,7 @@ class MLPerformanceMonitoring:
             raise TypeError("metric_client_host instance type must be str or None")
         if label_type is not None:
             warnings.warn(
-                'argument "label_type" is deprecated and is curently ignored, please remove this argument'
+                'argument "label_type" is deprecated and is currently ignored, please remove this argument'
             )
 
         self.event_client_host = event_client_host or os.getenv(
@@ -245,41 +249,28 @@ class MLPerformanceMonitoring:
 
     def prepare_events(
         self,
-        flat: pd.DataFrame,
-        y: pd.DataFrame,
+        inference_data: pd.DataFrame,
         metadata: Dict[str, Any],
-        inference_id_to_inference_metadata: Dict[str, Dict[str, str]],
+        inference_metadata: Optional[List[Dict[str, str]]] = None,
         timestamp: Optional[int] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Sequence[Event]:
         events: List[Event] = []
 
+        columns = inference_data.columns.to_list()
+
         request_id = self.get_request_id()
-        for t in flat.itertuples(index=False, name=None):
+        for index, t in enumerate(inference_data.itertuples(index=False, name=None)):
             curr_inference_metadata = (
-                inference_id_to_inference_metadata[t[0]]
-                if t[0] in inference_id_to_inference_metadata
-                else {}
+                inference_metadata[index] if inference_metadata else {}
             )
             events.append(
                 self.tuple_to_event(
                     t,
-                    flat.columns.to_list(),
+                    columns,
                     request_id,
                     {**metadata, **curr_inference_metadata},
                     timestamp,
-                )
-            )
-
-        for s in y.itertuples(index=False, name=None):
-            events.append(
-                self.tuple_to_event(
-                    s,
-                    y.columns.to_list(),
-                    request_id,
-                    metadata,
-                    timestamp,
-                    params=params,
                 )
             )
 
@@ -290,7 +281,7 @@ class MLPerformanceMonitoring:
         X: Union[pd.DataFrame, np.ndarray],
         y: Union[pd.DataFrame, np.ndarray],
         *,
-        inference_metadata: List[Dict[str, str]] = [],
+        inference_metadata: Optional[List[Dict[str, str]]] = None,
         data_summary_min_rows: int = 100,
         timestamp: Optional[int] = None,
     ):
@@ -317,7 +308,7 @@ class MLPerformanceMonitoring:
             raise TypeError("y instance type must be pd.DataFrame or np.ndarray")
         if len(X) != len(y):
             raise ValueError("X and y must have the same length")
-        elif len(inference_metadata) > 0 and len(inference_metadata) != len(X):
+        elif inference_metadata and len(inference_metadata) != len(X):
             raise ValueError(
                 "inference_metadata must have the same length as X and y or have a length of 0"
             )
@@ -329,21 +320,15 @@ class MLPerformanceMonitoring:
                 else [str(int) for int in range(len(X[0]))],
             )
 
-        columns_types = self._calc_columns_types(
-            X.drop(columns=["index"], errors="ignore")
-        )
+        X_copy = X.add_prefix(FeatureNamePrefix)
+        now = datetime.datetime.now()
 
-        X_df = X.stack().reset_index()
-        X_df.columns = ["inference_id", "feature_name", "feature_value"]
-        X_df["feature_type"] = X_df["feature_name"].map(columns_types)
-        infid_to_uuid = {
-            infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()
-        }
-        inference_id_to_inference_metadata = dict(
-            zip(infid_to_uuid.values(), inference_metadata)
-        )
-        X_df["inference_id"] = X_df["inference_id"].apply(lambda x: infid_to_uuid[x])
-        X_df["batch.index"] = X_df.groupby("inference_id").cumcount()
+        uuid_list = [
+            str(uuid.uuid5(self.monitor_uuid, str(now) + str(i)))
+            for i in range(X.shape[0])
+        ]
+
+        X_copy["inference_id"] = uuid_list
 
         if not isinstance(y, pd.DataFrame):
             labels_columns = (
@@ -356,17 +341,10 @@ class MLPerformanceMonitoring:
                 list(map(np.ravel, y)),
                 columns=[str(sub) for sub in labels_columns],
             )
-        y_df = y.stack().reset_index()
-        y_df.columns = ["inference_id", "label_name", "label_value"]
 
-        label_column_types = self._calc_columns_types(
-            y.drop(columns=["index"], errors="ignore")
-        )
+        y_copy = y.add_prefix(LabelNamePrefix)
 
-        y_df["label_type"] = y_df["label_name"].map(label_column_types)
-        y_df["inference_id"] = y_df["inference_id"].apply(lambda x: infid_to_uuid[x])
-        y_df["batch.index"] = y_df.groupby("inference_id").cumcount()
-        inference_data = pd.concat([X, y], axis=1)
+        inference_data = pd.concat([X_copy, y_copy], axis=1)
         if self.send_data_metrics:
             if len(inference_data) >= data_summary_min_rows:
                 self.df_statistics = self._calc_descriptive_statistics(inference_data)
@@ -391,11 +369,12 @@ class MLPerformanceMonitoring:
             return
         inference_data.reset_index(level=0, inplace=True)
 
+        inference_data["new_relic_data_schema_version"] = 2
+
         events = self.prepare_events(
-            X_df,
-            y_df,
+            inference_data.drop(columns=["index"], errors="ignore"),
             metadata=self.static_metadata,
-            inference_id_to_inference_metadata=inference_id_to_inference_metadata,
+            inference_metadata=inference_metadata,
             timestamp=timestamp,
         )
         try:
