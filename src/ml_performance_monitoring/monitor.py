@@ -71,6 +71,8 @@ class MLPerformanceMonitoring:
         use_logger: Optional[bool] = None,
     ):
 
+        self.monitor_uuid = uuid.uuid4()
+
         if not isinstance(model_name, str) or not model_name:
             raise TypeError("model_name instance type must be str and not empty")
         if not isinstance(model_version, str) or not model_version:
@@ -337,7 +339,8 @@ class MLPerformanceMonitoring:
         X_df.columns = ["inference_id", "feature_name", "feature_value"]
         X_df["feature_type"] = X_df["feature_name"].map(columns_types)
         infid_to_uuid = {
-            infid: str(uuid.uuid4()) for infid in X_df["inference_id"].unique()
+            infid: str(uuid.uuid5(self.monitor_uuid, str(datetime.datetime.now())))
+            for infid in X_df["inference_id"].unique()
         }
         inference_id_to_inference_metadata = dict(
             zip(infid_to_uuid.values(), inference_metadata)
